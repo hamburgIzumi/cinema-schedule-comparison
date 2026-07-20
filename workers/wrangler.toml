@@ -1,0 +1,6 @@
+name = "cinema-schedule-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# 無料の Cloudflare Workers 環境でワンコマンドデプロイ
+# デプロイコマンド: npx wrangler deploy

@@ -42,3 +42,11 @@
 9. **[Issue #9] デモ（ダミー）データ表示時の明確化表示・警告バッジの実装**
    - 詳細チケット: [ISSUE/issue-9.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-9.md)
    - ステータス: 完了 (Completed)
+
+10. **[Issue #10] イオンシネマ新URL対応（theater.aeoncinema.com）と映画館パーサー最適化**
+   - 詳細チケット: [ISSUE/issue-10.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-10.md)
+   - ステータス: 完了 (Completed)
+
+11. **[Issue #11] Cloudflare Workers によるリアルタイムプロキシAPI構築と連携**
+   - 詳細チケット: [ISSUE/issue-11.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-11.md)
+   - ステータス: 完了 (Completed)

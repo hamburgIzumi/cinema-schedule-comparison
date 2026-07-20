@@ -1,7 +1,6 @@
 /**
  * @file aeonFetcher.js
- * @description イオンシネマ（新百合ヶ丘・座間）の上映スケジュール・空席データを動的に抽出・パースするモジュール
- * (直APIフェッチ優先 ＆ 従来HTMLフェッチへの切り戻し機能対応)
+ * @description イオンシネマ（新百合ヶ丘・座間: theater.aeoncinema.com）の上映スケジュール・空席データを動的に抽出・パースするモジュール
  */
 
 import { CorsProxyService } from './corsProxy.js';
@@ -18,19 +17,23 @@ export class AeonFetcher {
    * @returns {Promise<Object>} 統一スケジュールデータ構造
    */
   async fetchSchedule(targetDate = new Date()) {
-    // 優先度1: useDirectApi フラグが有効な場合、直API / JSON取得を試行
-    if (this.config.useDirectApi !== false) {
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}${mm}${dd}`;
+
+    // 優先度0: Cloudflare Workers リアルタイムプロキシAPIが設定されている場合
+    if (this.config.workersApiUrl) {
       try {
-        const apiData = await this.fetchScheduleFromApi(targetDate);
-        if (apiData && apiData.movies && apiData.movies.length > 0) {
-          return apiData;
+        const workersData = await this.corsProxy.fetchFromWorkersApi(this.config.workersApiUrl, this.config.id, dateStr);
+        if (workersData && workersData.movies && workersData.movies.length > 0) {
+          return workersData;
         }
       } catch (e) {
-        console.warn(`AEON Direct API fetch failed for ${this.config.name}, falling back to HTML parser:`, e);
+        console.warn(`AEON Workers API fetch failed for ${this.config.name}:`, e);
       }
     }
 
-    // 優先度2: 従来のHTML解析モジュールでの取得
     try {
       return await this.fetchScheduleFromHtml(targetDate);
     } catch (error) {
@@ -40,57 +43,7 @@ export class AeonFetcher {
   }
 
   /**
-   * 優先度1: イオンシネマの直JSON APIデータ取得
-   */
-  async fetchScheduleFromApi(targetDate) {
-    const yyyy = targetDate.getFullYear();
-    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(targetDate.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
-
-    const apiUrl = `${this.config.apiUrl}?date=${dateStr}`;
-    const json = await this.corsProxy.fetchJson(apiUrl);
-
-    if (json && (json.movies || json.schedule || Array.isArray(json))) {
-      const rawMovies = json.movies || json.schedule || (Array.isArray(json) ? json : []);
-      const movies = [];
-
-      rawMovies.forEach(item => {
-        if (item.movie_name || item.title) {
-          const title = item.movie_name || item.title;
-          const schedules = (item.times || item.schedules || []).map(t => ({
-            time: t.time || `${t.start || '09:00'} - ${t.end || '11:00'}`,
-            startTime: t.start || '09:00',
-            screen: t.screen || 'スクリーン 1',
-            format: t.format || '2D',
-            status: t.seat === '◎' ? '◎' : (t.seat === '△' ? '△' : (t.seat === '×' ? '×' : '◯')),
-            statusText: t.statusText || '予約可能',
-            reserveUrl: t.url || this.config.siteUrl
-          }));
-
-          if (schedules.length > 0) {
-            movies.push({ title, schedules });
-          }
-        }
-      });
-
-      if (movies.length > 0) {
-        return {
-          cinemaId: this.config.id,
-          cinemaName: this.config.name,
-          targetDate: dateStr,
-          isFallback: false,
-          fetchedAt: new Date().toISOString(),
-          movies: movies
-        };
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * 優先度2: 従来のHTML解析モジュールでの取得
+   * theater.aeoncinema.com からのHTML直接スクレイピング処理
    */
   async fetchScheduleFromHtml(targetDate) {
     const yyyy = targetDate.getFullYear();
@@ -98,46 +51,55 @@ export class AeonFetcher {
     const dd = String(targetDate.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}${mm}${dd}`;
 
-    const targetUrl = this.config.url.includes('?') 
-      ? `${this.config.url}&date=${dateStr}` 
-      : `${this.config.url}?date=${dateStr}`;
+    // URLに日付パラメータ ?date=YYYYMMDD を正確に構築
+    let baseUrl = this.config.url;
+    if (baseUrl.includes('?')) {
+      baseUrl = baseUrl.split('?')[0];
+    }
+    const targetUrl = `${baseUrl}?date=${dateStr}`;
 
     const html = await this.corsProxy.fetchHtml(targetUrl);
     const doc = this.corsProxy.parseDom(html);
 
     const movies = [];
-    const movieElements = doc.querySelectorAll('.movie_box, .schedule_box, .movie-item, .schedule-movie-list > div');
+    
+    // 多重セレクタによる作品ブロック取得 (theater.aeoncinema.com & 旧表示両対応)
+    const movieElements = doc.querySelectorAll('.movie_box, .schedule_box, .movie-item, .movie-box, .schedule-movie-list > div, section.movie');
 
     if (movieElements.length > 0) {
       movieElements.forEach(el => {
-        const titleEl = el.querySelector('.movie_title, .title, h3, .movie-name');
+        // 作品タイトルの抽出
+        const titleEl = el.querySelector('.movie_title, .title, h3, .movie-name, .movie-title, .name');
         if (!titleEl) return;
         const title = titleEl.textContent.trim();
 
         const schedules = [];
-        const timeBoxes = el.querySelectorAll('.time_box, .time-item, .time_table tr, .schedule-time-item');
+        // 上映枠ブロックの抽出
+        const timeBoxes = el.querySelectorAll('.time_box, .time-item, .time_table tr, .schedule-time-item, .time-box, li.time');
 
         timeBoxes.forEach(box => {
-          const timeText = box.querySelector('.time, .start, .time-start')?.textContent.trim() || box.textContent.trim();
-          const statusText = box.querySelector('.seat, .status, .icon')?.textContent.trim() || '◯';
+          const timeText = box.querySelector('.time, .start, .time-start, .start-time')?.textContent.trim() || box.textContent.trim();
+          const statusText = box.querySelector('.seat, .status, .icon, .seat-status')?.textContent.trim() || '◯';
 
           let status = '◯';
-          if (statusText.includes('◎') || statusText.includes('余裕')) status = '◎';
-          else if (statusText.includes('△') || statusText.includes('わずか')) status = '△';
-          else if (statusText.includes('×') || statusText.includes('満席')) status = '×';
+          if (statusText.includes('◎') || statusText.includes('余裕') || statusText.includes('空席あり')) status = '◎';
+          else if (statusText.includes('△') || statusText.includes('わずか') || statusText.includes('残りわずか')) status = '△';
+          else if (statusText.includes('×') || statusText.includes('満席') || statusText.includes('完売')) status = '×';
 
           const reserveUrl = box.querySelector('a')?.href || this.config.siteUrl;
 
-          schedules.push({
-            time: timeText,
-            startTime: timeText.substring(0, 5),
-            endTime: timeText.length > 5 ? timeText.substring(6) : '',
-            screen: box.querySelector('.screen_name, .screen')?.textContent.trim() || 'スクリーン 1',
-            format: '2D',
-            status: status,
-            statusText: statusText || '予約可能',
-            reserveUrl: reserveUrl
-          });
+          if (timeText && timeText.length >= 4) {
+            schedules.push({
+              time: timeText,
+              startTime: timeText.substring(0, 5),
+              endTime: timeText.length > 5 ? timeText.substring(6) : '',
+              screen: box.querySelector('.screen_name, .screen, .screen-name')?.textContent.trim() || 'スクリーン 1',
+              format: box.querySelector('.format, .type')?.textContent.trim() || '2D',
+              status: status,
+              statusText: statusText || '予約可能',
+              reserveUrl: reserveUrl
+            });
+          }
         });
 
         if (schedules.length > 0) {
@@ -146,22 +108,24 @@ export class AeonFetcher {
       });
     }
 
-    if (movies.length === 0) {
-      return this.getRealtimeFallbackData(targetDate);
+    // 正確に実データがパースできた場合のみ isFallback: false で返却
+    if (movies.length > 0) {
+      return {
+        cinemaId: this.config.id,
+        cinemaName: this.config.name,
+        targetDate: dateStr,
+        isFallback: false,
+        fetchedAt: new Date().toISOString(),
+        movies: movies
+      };
     }
 
-    return {
-      cinemaId: this.config.id,
-      cinemaName: this.config.name,
-      targetDate: dateStr,
-      isFallback: false,
-      fetchedAt: new Date().toISOString(),
-      movies: movies
-    };
+    // 抽出できなかった場合はフォールバック
+    return this.getRealtimeFallbackData(targetDate);
   }
 
   /**
-   * 優先度3: 動的フォールバック生成
+   * 通信障害・パース失敗時の動的フォールバック生成
    */
   getRealtimeFallbackData(targetDate = new Date()) {
     const isShinyurigaoka = this.config.id.includes('shinyurigaoka');
