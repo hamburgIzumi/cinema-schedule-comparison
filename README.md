@@ -29,7 +29,8 @@ cinema-schedule-comparison/
 │   ├── issue-4.md               # [Issue #4] MAX方式作品統合
 │   ├── issue-5.md               # [Issue #5] UI/UX・マトリクス表
 │   ├── issue-6.md               # [Issue #6] 検証・最終PR準備
-│   └── issue-7.md               # [Issue #7] 当日を含む7日間の日付選択・切替
+│   ├── issue-7.md               # [Issue #7] 当日を含む7日間の日付選択・切替
+│   └── issue-8.md               # [Issue #8] 直APIフェッチと切り戻しスイッチ
 ├── prompt/
 │   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/
@@ -91,6 +92,17 @@ cinema-schedule-comparison/
 3. `Save` を押すと数分でサイトが無料公開されます。
 
 ---
+
+---
+
+## ⚙️ データ取得方式と切り戻し（スイッチ設定）
+
+映画館のデータ取得は多重フォールバック構造になっており、`config/cinemas.json` 内の `"useDirectApi"` フラグで瞬時に取得方式を切り替え可能です。
+
+- `"useDirectApi": true` (デフォルト): 各映画館の内部JSON API/高度な直接構造化データを最優先で動的取得。
+- `"useDirectApi": false` (切り戻し用): 従来のHTML直接スクレイピング方式に即座に戻すことが可能。
+
+万が一、映画館側の仕様変更やAPI障害が発生した場合でも、設定ファイルの `"useDirectApi": false` に変更するだけで前の状態に安全に復元できます。
 
 ## 📋 初回対象映画館のURL
 

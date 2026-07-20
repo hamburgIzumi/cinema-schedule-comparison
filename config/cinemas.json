@@ -5,9 +5,11 @@
     "shortName": "TOHO海老名",
     "brand": "TOHO",
     "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
+    "apiUrl": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
     "siteUrl": "https://www.tohotheater.jp/theater/007/",
     "fetcherType": "toho",
     "theaterCode": "007",
+    "useDirectApi": true,
     "color": "#e50914",
     "enabled": true
   },
@@ -17,9 +19,11 @@
     "shortName": "イオン新百合ヶ丘",
     "brand": "AEON",
     "url": "https://theater.aeoncinema.com/theaters/shinyurigaoka/",
+    "apiUrl": "https://www.aeoncinema.com/cinema/shinyurigaoka/json/schedule.json",
     "siteUrl": "https://www.aeoncinema.com/cinema/shinyurigaoka/",
     "fetcherType": "aeon",
     "theaterCode": "shinyurigaoka",
+    "useDirectApi": true,
     "color": "#800080",
     "enabled": true
   },
@@ -29,9 +33,11 @@
     "shortName": "109南町田",
     "brand": "109",
     "url": "https://109cinemas.net/grandberrypark/",
+    "apiUrl": "https://109cinemas.net/api/schedule?theater=grandberrypark",
     "siteUrl": "https://109cinemas.net/grandberrypark/",
     "fetcherType": "tokyu109",
     "theaterCode": "grandberrypark",
+    "useDirectApi": true,
     "color": "#005a9c",
     "enabled": true
   },
@@ -41,9 +47,11 @@
     "shortName": "イオン座間",
     "brand": "AEON",
     "url": "https://www.aeoncinema.com/cinema/zama/",
+    "apiUrl": "https://www.aeoncinema.com/cinema/zama/json/schedule.json",
     "siteUrl": "https://www.aeoncinema.com/cinema/zama/",
     "fetcherType": "aeon",
     "theaterCode": "zama",
+    "useDirectApi": true,
     "color": "#008080",
     "enabled": true
   }
