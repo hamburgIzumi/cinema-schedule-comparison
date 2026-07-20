@@ -1,0 +1,50 @@
+[
+  {
+    "id": "toho-ebina",
+    "name": "TOHOシネマズ 海老名",
+    "shortName": "TOHO海老名",
+    "brand": "TOHO",
+    "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
+    "siteUrl": "https://www.tohotheater.jp/theater/007/",
+    "fetcherType": "toho",
+    "theaterCode": "007",
+    "color": "#e50914",
+    "enabled": true
+  },
+  {
+    "id": "aeon-shinyurigaoka",
+    "name": "イオンシネマ 新百合ヶ丘",
+    "shortName": "イオン新百合ヶ丘",
+    "brand": "AEON",
+    "url": "https://theater.aeoncinema.com/theaters/shinyurigaoka/",
+    "siteUrl": "https://www.aeoncinema.com/cinema/shinyurigaoka/",
+    "fetcherType": "aeon",
+    "theaterCode": "shinyurigaoka",
+    "color": "#800080",
+    "enabled": true
+  },
+  {
+    "id": "109-minamimachida",
+    "name": "109シネマズ 南町田グランベリーパーク",
+    "shortName": "109南町田",
+    "brand": "109",
+    "url": "https://109cinemas.net/grandberrypark/",
+    "siteUrl": "https://109cinemas.net/grandberrypark/",
+    "fetcherType": "tokyu109",
+    "theaterCode": "grandberrypark",
+    "color": "#005a9c",
+    "enabled": true
+  },
+  {
+    "id": "aeon-zama",
+    "name": "イオンシネマ 座間",
+    "shortName": "イオン座間",
+    "brand": "AEON",
+    "url": "https://www.aeoncinema.com/cinema/zama/",
+    "siteUrl": "https://www.aeoncinema.com/cinema/zama/",
+    "fetcherType": "aeon",
+    "theaterCode": "zama",
+    "color": "#008080",
+    "enabled": true
+  }
+]

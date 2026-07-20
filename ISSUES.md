@@ -1,0 +1,32 @@
+# プロジェクト Issues 一覧
+
+本ドキュメントは `/Users/sizumi/toybox/RULES.md` に基づき、プロジェクトマネージャー（役割A）が管理する全Issueの一覧です。
+各Issueの詳細は `ISSUE/` フォルダ配下の個別チケットMarkdownファイルを参照してください。
+
+---
+
+## Issue一覧
+
+1. **[Issue #1] プロジェクトの基本構造、Gitブランチ構成（work）、およびREADME.mdの整備**
+   - 詳細チケット: [ISSUE/issue-1.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-1.md)
+   - ステータス: 完了 (Completed)
+
+2. **[Issue #2] 設定ファイル (cinemas.json) の定義と動的ロードモジュールの作成**
+   - 詳細チケット: [ISSUE/issue-2.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-2.md)
+   - ステータス: 完了 (Completed)
+
+3. **[Issue #3] CORSプロキシ経由の映画館データ動的取得モジュール (TOHO/イオン/109シネマズ) の実装**
+   - 詳細チケット: [ISSUE/issue-3.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-3.md)
+   - ステータス: 完了 (Completed)
+
+4. **[Issue #4] MAX方式による全映画館作品ユニーク化＆マトリクス構造の構築**
+   - 詳細チケット: [ISSUE/issue-4.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-4.md)
+   - ステータス: 完了 (Completed)
+
+5. **[Issue #5] スタイリッシュなダークテーマ UI/UX とレスポンシブ比較表・モーダルの実装**
+   - 詳細チケット: [ISSUE/issue-5.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-5.md)
+   - ステータス: 完了 (Completed)
+
+6. **[Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備**
+   - 詳細チケット: [ISSUE/issue-6.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-6.md)
+   - ステータス: 完了 (Completed)
