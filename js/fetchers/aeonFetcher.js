@@ -13,14 +13,32 @@ export class AeonFetcher {
 
   /**
    * イオンシネマの上映スケジュールデータを動的取得・解析する
-   * @param {Date} targetDate - 取得対象日（デフォルト: 本日）
+   * @param {string|Date} targetDate - 取得対象日（文字列 'YYYYMMDD' または Dateオブジェクト）
    * @returns {Promise<Object>} 統一スケジュールデータ構造
    */
   async fetchSchedule(targetDate = new Date()) {
-    const yyyy = targetDate.getFullYear();
-    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(targetDate.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
+    let dateStr = '';
+    let dateObj;
+
+    if (typeof targetDate === 'string') {
+      dateStr = targetDate;
+      const yyyy = parseInt(targetDate.substring(0, 4), 10);
+      const mm = parseInt(targetDate.substring(4, 6), 10) - 1;
+      const dd = parseInt(targetDate.substring(6, 8), 10);
+      dateObj = new Date(yyyy, mm, dd);
+    } else if (targetDate instanceof Date) {
+      dateObj = targetDate;
+      const yyyy = targetDate.getFullYear();
+      const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(targetDate.getDate()).padStart(2, '0');
+      dateStr = `${yyyy}${mm}${dd}`;
+    } else {
+      dateObj = new Date();
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      dateStr = `${yyyy}${mm}${dd}`;
+    }
 
     // 優先度0: Cloudflare Workers リアルタイムプロキシAPIが設定されている場合
     if (this.config.workersApiUrl) {
@@ -35,7 +53,7 @@ export class AeonFetcher {
     }
 
     try {
-      return await this.fetchScheduleFromHtml(targetDate);
+      return await this.fetchScheduleFromHtml(dateObj, dateStr);
     } catch (error) {
       console.warn(`AEON fetch error for ${this.config.name}:`, error);
       return {
@@ -51,137 +69,76 @@ export class AeonFetcher {
   /**
    * theater.aeoncinema.com からのHTML直接スクレイピング処理
    */
-  async fetchScheduleFromHtml(targetDate) {
-    const yyyy = targetDate.getFullYear();
-    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(targetDate.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
-
-    // URLに日付パラメータ ?date=YYYYMMDD を正確に構築
-    let baseUrl = this.config.url;
+  async fetchScheduleFromHtml(dateObj, dateStr) {
+    let baseUrl = this.config.url || this.config.siteUrl || '';
     if (baseUrl.includes('?')) {
       baseUrl = baseUrl.split('?')[0];
     }
     const targetUrl = `${baseUrl}?date=${dateStr}`;
 
-    const html = await this.corsProxy.fetchHtml(targetUrl);
-    const doc = this.corsProxy.parseDom(html);
+    try {
+      const html = await this.corsProxy.fetchHtml(targetUrl);
+      const doc = this.corsProxy.parseDom(html);
 
-    const movies = [];
-    
-    // 多重セレクタによる作品ブロック取得 (theater.aeoncinema.com & 旧表示両対応)
-    const movieElements = doc.querySelectorAll('.movie_box, .schedule_box, .movie-item, .movie-box, .schedule-movie-list > div, section.movie');
+      const movies = [];
+      const movieElements = doc.querySelectorAll('.movie_box, .schedule_box, .movie-item, .movie-box, .schedule-movie-list > div, section.movie');
 
-    if (movieElements.length > 0) {
-      movieElements.forEach(el => {
-        // 作品タイトルの抽出
-        const titleEl = el.querySelector('.movie_title, .title, h3, .movie-name, .movie-title, .name');
-        if (!titleEl) return;
-        const title = titleEl.textContent.trim();
+      if (movieElements.length > 0) {
+        movieElements.forEach(el => {
+          const titleEl = el.querySelector('.movie_title, .title, h3, .movie-name, .movie-title, .name');
+          if (!titleEl) return;
+          const title = titleEl.textContent.trim();
 
-        const schedules = [];
-        // 上映枠ブロックの抽出
-        const timeBoxes = el.querySelectorAll('.time_box, .time-item, .time_table tr, .schedule-time-item, .time-box, li.time');
+          const schedules = [];
+          const timeBoxes = el.querySelectorAll('.time_box, .time-item, .time_table tr, .schedule-time-item, .time-box, li.time');
 
-        timeBoxes.forEach(box => {
-          const timeText = box.querySelector('.time, .start, .time-start, .start-time')?.textContent.trim() || box.textContent.trim();
-          const statusText = box.querySelector('.seat, .status, .icon, .seat-status')?.textContent.trim() || '◯';
+          timeBoxes.forEach(box => {
+            const timeText = box.querySelector('.time, .start, .time-start, .start-time')?.textContent.trim() || box.textContent.trim();
+            const statusText = box.querySelector('.seat, .status, .icon, .seat-status')?.textContent.trim() || '◯';
 
-          let status = '◯';
-          if (statusText.includes('◎') || statusText.includes('余裕') || statusText.includes('空席あり')) status = '◎';
-          else if (statusText.includes('△') || statusText.includes('わずか') || statusText.includes('残りわずか')) status = '△';
-          else if (statusText.includes('×') || statusText.includes('満席') || statusText.includes('完売')) status = '×';
+            let status = '◯';
+            if (statusText.includes('◎') || statusText.includes('余裕') || statusText.includes('空席あり')) status = '◎';
+            else if (statusText.includes('△') || statusText.includes('わずか') || statusText.includes('残りわずか')) status = '△';
+            else if (statusText.includes('×') || statusText.includes('満席') || statusText.includes('完売')) status = '×';
 
-          const reserveUrl = box.querySelector('a')?.href || this.config.siteUrl;
+            const reserveUrl = box.querySelector('a')?.href || this.config.siteUrl;
 
-          if (timeText && timeText.length >= 4) {
-            schedules.push({
-              time: timeText,
-              startTime: timeText.substring(0, 5),
-              endTime: timeText.length > 5 ? timeText.substring(6) : '',
-              screen: box.querySelector('.screen_name, .screen, .screen-name')?.textContent.trim() || 'スクリーン 1',
-              format: box.querySelector('.format, .type')?.textContent.trim() || '2D',
-              status: status,
-              statusText: statusText || '予約可能',
-              reserveUrl: reserveUrl
-            });
+            if (timeText && timeText.length >= 4) {
+              schedules.push({
+                time: timeText,
+                startTime: timeText.substring(0, 5),
+                endTime: timeText.length > 5 ? timeText.substring(6) : '',
+                screen: box.querySelector('.screen_name, .screen, .screen-name')?.textContent.trim() || 'スクリーン 1',
+                format: box.querySelector('.format, .type')?.textContent.trim() || '2D',
+                status: status,
+                statusText: statusText || '予約可能',
+                reserveUrl: reserveUrl
+              });
+            }
+          });
+
+          if (schedules.length > 0) {
+            movies.push({ title, schedules });
           }
         });
+      }
 
-        if (schedules.length > 0) {
-          movies.push({ title, schedules });
-        }
-      });
-    }
-
-    // 正確に実データがパースできた場合のみ isFallback: false で返却
-    if (movies.length > 0) {
       return {
         cinemaId: this.config.id,
         cinemaName: this.config.name,
         targetDate: dateStr,
-        isFallback: false,
         fetchedAt: new Date().toISOString(),
         movies: movies
       };
+
+    } catch (e) {
+      return {
+        cinemaId: this.config.id,
+        cinemaName: this.config.name,
+        targetDate: dateStr,
+        fetchedAt: new Date().toISOString(),
+        movies: []
+      };
     }
-
-    // 抽出できなかった場合はフォールバック
-    return this.getRealtimeFallbackData(targetDate);
-  }
-
-  /**
-   * 通信障害・パース失敗時の動的フォールバック生成
-   */
-  getRealtimeFallbackData(targetDate = new Date()) {
-    const isShinyurigaoka = this.config.id.includes('shinyurigaoka');
-    const daySeed = (targetDate.getDate() + (isShinyurigaoka ? 1 : 2)) % 4;
-    const statuses = ['◎', '◯', '△', '×'];
-
-    return {
-      cinemaId: this.config.id,
-      cinemaName: this.config.name,
-      isFallback: true,
-      fallbackReason: "通信遮断またはサイト構造変化のため接続テスト用サンプル（ダミー）データを表示中",
-      fetchedAt: new Date().toISOString(),
-      movies: [
-        {
-          title: "名探偵コナン 100万ドルの五稜星",
-          schedules: [
-            { time: "08:45 - 10:50", startTime: "08:45", screen: isShinyurigaoka ? "スクリーン 1 (ULTIRA)" : "スクリーン 1", format: "2D / 吹替", status: statuses[daySeed], statusText: "予約可能", reserveUrl: this.config.siteUrl },
-            { time: "11:20 - 13:25", startTime: "11:20", screen: isShinyurigaoka ? "スクリーン 1 (ULTIRA)" : "スクリーン 1", format: "2D / 吹替", status: statuses[(daySeed + 1) % 4], statusText: "予約可能", reserveUrl: this.config.siteUrl },
-            { time: "14:00 - 16:05", startTime: "14:00", screen: "スクリーン 3", format: "2D / 吹替", status: "△", statusText: "残りわずか", reserveUrl: this.config.siteUrl },
-            { time: "16:40 - 18:45", startTime: "16:40", screen: "スクリーン 3", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl },
-            { time: "19:20 - 21:25", startTime: "19:20", screen: "スクリーン 3", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl }
-          ]
-        },
-        {
-          title: "劇場版ハイキュー!! ゴミ捨て場の決戦",
-          schedules: [
-            { time: "09:15 - 10:45", startTime: "09:15", screen: "スクリーン 4", format: "2D", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl },
-            { time: "11:30 - 13:00", startTime: "11:30", screen: "スクリーン 4", format: "2D", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl },
-            { time: "14:15 - 15:45", startTime: "14:15", screen: "スクリーン 4", format: "2D", status: "△", statusText: "残りわずか", reserveUrl: this.config.siteUrl },
-            { time: "17:30 - 19:00", startTime: "17:30", screen: "スクリーン 4", format: "2D", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl }
-          ]
-        },
-        {
-          title: "ゴジラxコング 新たなる帝国",
-          schedules: [
-            { time: "10:30 - 12:30", startTime: "10:30", screen: isShinyurigaoka ? "スクリーン 2" : "スクリーン 5 (ULTIRA)", format: "3D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl },
-            { time: "13:15 - 15:15", startTime: "13:15", screen: isShinyurigaoka ? "スクリーン 2" : "スクリーン 5 (ULTIRA)", format: "2D / 字幕", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl },
-            { time: "18:00 - 20:00", startTime: "18:00", screen: "スクリーン 2", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl }
-          ]
-        },
-        {
-          title: "インサイド・ヘッド2",
-          schedules: [
-            { time: "09:00 - 10:40", startTime: "09:00", screen: "スクリーン 6", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl },
-            { time: "11:15 - 12:55", startTime: "11:15", screen: "スクリーン 6", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl },
-            { time: "13:30 - 15:10", startTime: "13:30", screen: "スクリーン 6", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: this.config.siteUrl },
-            { time: "15:45 - 17:25", startTime: "15:45", screen: "スクリーン 6", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: this.config.siteUrl }
-          ]
-        }
-      ]
-    };
   }
 }
