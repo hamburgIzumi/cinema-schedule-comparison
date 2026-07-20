@@ -4,9 +4,65 @@
  */
 
 export class UiRender {
-  constructor(tableContainerId, modalOverlayId) {
+  constructor(tableContainerId, modalOverlayId, dateTabsContainerId = 'date-tabs-container') {
     this.tableContainer = document.getElementById(tableContainerId);
     this.modalOverlay = document.getElementById(modalOverlayId);
+    this.dateTabsContainer = document.getElementById(dateTabsContainerId);
+  }
+
+  /**
+   * 当日を含む7日間の日付ナビゲーションタブをレンダリングする
+   * @param {Date} selectedDate - 現在選択中の日付
+   * @param {Function} onDateSelectCallback - 日付切り替え時のコールバック関数
+   */
+  renderDateTabs(selectedDate, onDateSelectCallback) {
+    if (!this.dateTabsContainer) return;
+
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let html = '';
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+
+      const isSelected = selectedDate.getDate() === d.getDate() && selectedDate.getMonth() === d.getMonth();
+      const dayOfWeek = d.getDay();
+      const month = d.getMonth() + 1;
+      const dateNum = d.getDate();
+
+      let dayClass = '';
+      if (dayOfWeek === 6) dayClass = 'sat';
+      if (dayOfWeek === 0) dayClass = 'sun';
+
+      let labelText = `${month}/${dateNum}`;
+      let dayLabel = `${dayNames[dayOfWeek]}`;
+      if (i === 0) dayLabel = '本日';
+      else if (i === 1) dayLabel = '明日';
+
+      html += `
+        <div class="date-tab-item ${dayClass} ${isSelected ? 'active' : ''}" data-date="${d.toISOString()}">
+          <span class="date-tab-day">${dayLabel}</span>
+          <span class="date-tab-date">${labelText} (${dayNames[dayOfWeek]})</span>
+        </div>
+      `;
+    }
+
+    this.dateTabsContainer.innerHTML = html;
+
+    // タブクリックイベント
+    const tabItems = this.dateTabsContainer.querySelectorAll('.date-tab-item');
+    tabItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const dateStr = item.dataset.date;
+        const newDate = new Date(dateStr);
+        if (onDateSelectCallback) {
+          onDateSelectCallback(newDate);
+        }
+      });
+    });
   }
 
   /**

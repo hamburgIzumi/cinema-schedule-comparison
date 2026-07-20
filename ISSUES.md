@@ -30,3 +30,7 @@
 6. **[Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備**
    - 詳細チケット: [ISSUE/issue-6.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-6.md)
    - ステータス: 完了 (Completed)
+
+7. **[Issue #7] 当日を含む7日間の日付選択・切り替え機能の実装**
+   - 詳細チケット: [ISSUE/issue-7.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-7.md)
+   - ステータス: 完了 (Completed)
