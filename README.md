@@ -48,11 +48,13 @@ cinema-schedule-comparison/
 | `ISSUES.md` | 作成済 | `/Users/sizumi/toybox/RULES.md` に基づきプロジェクトマネージャーが管理する全Issue一覧。 |
 | `config/cinemas.json` | **[Issue #2] 作成済** | 比較対象の映画館名、URL、識別子、ロゴなどを定義する設定ファイル。 |
 | `js/configLoader.js` | **[Issue #2] 作成済** | 外部設定ファイル `config/cinemas.json` を fetch して提供するモジュール。 |
+| `js/fetchers/corsProxy.js` | **[Issue #3] 作成済** | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONを動的フェッチするモジュール。 |
+| `js/fetchers/tohoFetcher.js` | **[Issue #3] 作成済** | TOHOシネマズ（海老名）用の上映スケジュール・空席動的パースモジュール。 |
+| `js/fetchers/aeonFetcher.js` | **[Issue #3] 作成済** | イオンシネマ（新百合ヶ丘・座間）用の上映スケジュール・空席動的パースモジュール。 |
+| `js/fetchers/tokyu109Fetcher.js` | **[Issue #3] 作成済** | 109シネマズ（南町田グランベリーパーク）用の上映スケジュール・空席動的パースモジュール。 |
 | `css/main.css` | 未作成 | 全体デザインシステム、カラーパレット、レスポンシブ変数。 |
 | `css/components.css` | 未作成 | 比較マトリクス表、固定タイトル列、空席ステータスバッジ、モーダルのスタイル。 |
 | `js/app.js` | 未作成 | ページの初期化、手動リフレッシュイベント、全モジュールの統括。 |
-| `js/fetchers/corsProxy.js` | 未作成 | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONをフェッチする通信処理。 |
-| `js/fetchers/*.js` | 未作成 | 各映画館サイトの固有HTML構造から作品名・時刻・空席情報を抽出するパーサー。 |
 | `js/scheduleUnifier.js` | 未作成 | 全映画館のデータを結合し、作品タイトルの名寄せ・ユニーク化を行ってマトリクス構造を作成。 |
 | `js/uiRender.js` | 未作成 | 統合データを基にDOM要素（マトリクス表、空席モーダル）を構築して表示。 |
 
