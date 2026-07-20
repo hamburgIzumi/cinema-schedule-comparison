@@ -1,6 +1,7 @@
 /**
  * @file index.js (Cloudflare Workers)
- * @description イオンシネマ専用 リアルタイム上映スケジュールプロキシAPI (最小構成)
+ * @description イオンシネマ専用 リアルタイム上映スケジュールプロキシAPI
+ * (https://www.aeoncinema.com/cinema2/all/movie/ から実作品タイトルを本物パース)
  */
 
 export default {
@@ -19,7 +20,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const cinemaId = url.searchParams.get('cinema') || 'aeon-zama';
+    const cinemaId = url.searchParams.get('cinema') || 'aeon-shinyurigaoka';
     const dateStr = url.searchParams.get('date') || getTodayStr();
 
     try {
@@ -43,23 +44,25 @@ export default {
 };
 
 /**
- * イオンシネマ（新百合ヶ丘・座間）専用 リアルタイムフェッチ
+ * イオンシネマ（新百合ヶ丘・座間） リアルタイムフェッチ
  */
 async function fetchAeon(cinemaId, dateStr) {
   const code = cinemaId.includes('zama') ? 'zama' : 'shinyurigaoka';
   const cinemaName = cinemaId.includes('zama') ? "イオンシネマ 座間" : "イオンシネマ 新百合ヶ丘";
-  const targetUrl = `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`;
+
+  // イオンシネマ全上映・公開作品一覧ページ
+  const targetUrl = `https://www.aeoncinema.com/cinema2/all/movie/`;
 
   const response = await fetch(targetUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Referer': `https://theater.aeoncinema.com/theaters/${code}/`
+      'Referer': 'https://www.aeoncinema.com/'
     }
   });
 
   const html = await response.text();
-  const movies = parseAeonHtml(html, `https://theater.aeoncinema.com/theaters/${code}/`);
+  const movies = parseAeonRealMovies(html, `https://theater.aeoncinema.com/theaters/${code}/`);
 
   return {
     cinemaId: cinemaId,
@@ -71,23 +74,34 @@ async function fetchAeon(cinemaId, dateStr) {
 }
 
 /**
- * イオンシネマ用 パース抽出処理
+ * イオンシネマ公式実作品タイトルパース処理
+ * (p-movie__title 内の <h3> から本物の作品名を完全抽出)
  */
-function parseAeonHtml(html, baseUrl) {
+function parseAeonRealMovies(html, baseUrl) {
   const movies = [];
-  const titleJpMatches = html.matchAll(/class="[^"]*p-schedule__titleJp[^"]*"[^>]*>(.*?)<\/(?:p|span|div|h[2-4])>/gi);
+  const matches = html.matchAll(/<div[^>]*class="?p-movie__title"?.*?>\s*<h3[^>]*>(.*?)<\/h3>/gi);
 
-  for (const m of titleJpMatches) {
-    const title = cleanText(m[1]);
-    if (title && title.length > 1) {
+  for (const m of matches) {
+    const rawTitle = cleanText(m[1]);
+    if (rawTitle && rawTitle.length > 1) {
       movies.push({
-        title,
+        title: rawTitle,
         schedules: []
       });
     }
   }
 
-  return movies;
+  // 重複タイトルを除外
+  const uniqueMovies = [];
+  const seen = new Set();
+  movies.forEach(m => {
+    if (!seen.has(m.title)) {
+      seen.add(m.title);
+      uniqueMovies.push(m);
+    }
+  });
+
+  return uniqueMovies;
 }
 
 function cleanText(text) {
