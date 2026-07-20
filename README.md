@@ -36,7 +36,8 @@ cinema-schedule-comparison/
 │   ├── issue-11.md              # [Issue #11] Cloudflare Workers リアルタイムAPI構築
 │   ├── issue-12.md              # [Issue #12] Workers パース精密化＆マルチパターン抽出
 │   ├── issue-13.md              # [Issue #13] ダミーデータ生成・ダミー警告の完全撤去
-│   └── issue-14.md              # [Issue #14] 最小構成化：イオンシネマ単独化と他館実装の全撤去
+│   ├── issue-14.md              # [Issue #14] 最小構成化：イオンシネマ単独化と他館実装の全撤去
+│   └── issue-15.md              # [Issue #15] ゼブラ縞表示および列境界線の視覚的強化
 ├── prompt/
 │   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/

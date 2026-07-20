@@ -62,3 +62,7 @@
 14. **[Issue #14] 最小構成化：イオンシネマ単独化と他館実装の全撤去**
    - 詳細チケット: [ISSUE/issue-14.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-14.md)
    - ステータス: 完了 (Completed)
+
+15. **[Issue #15] ゼブラ縞表示および列境界線の視覚的強化**
+   - 詳細チケット: [ISSUE/issue-15.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-15.md)
+   - ステータス: 完了 (Completed)

@@ -12,7 +12,7 @@ class CinemaApp {
     this.cinemasConfig = [];
     this.fetchers = [];
     this.scheduleUnifier = new ScheduleUnifier();
-    this.uiRender = new UIRender('table-container', 'modal-overlay', 'date-tabs-container');
+    this.uiRender = new UIRender('matrix-table-container', 'schedule-modal-overlay', 'date-tabs-container');
 
     this.selectedDate = this.getTodayDateString();
     this.unifiedData = null;

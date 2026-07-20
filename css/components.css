@@ -46,7 +46,8 @@
   width: 260px;
   min-width: 260px;
   max-width: 260px;
-  border-right: 2px solid var(--border-color);
+  border-right: 2px solid var(--accent-cyan);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
 .matrix-table th.col-movie-title {
@@ -67,21 +68,35 @@
   word-break: break-word;
 }
 
-/* データセル */
+/* データセル & カラム縦区切り線 */
 .matrix-table td {
   padding: 14px;
   border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
   vertical-align: top;
   text-align: center;
 }
 
-.matrix-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+.matrix-table th {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.matrix-table tr:hover td.col-movie-title {
-  background-color: #161e30;
+/* 行のゼブラパターン (縞表示) */
+.matrix-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.035);
+}
+
+.matrix-table tbody tr:nth-child(even) td.col-movie-title {
+  background-color: #141d30;
+}
+
+/* 行ホバー時のハイライト表現 */
+.matrix-table tbody tr:hover td {
+  background-color: rgba(79, 172, 254, 0.08) !important;
+}
+
+.matrix-table tbody tr:hover td.col-movie-title {
+  background-color: #1a2740 !important;
 }
 
 /* 映画館ヘッダーセル内容 */
