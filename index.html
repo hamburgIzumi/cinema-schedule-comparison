@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>映画館上映スケジュール比較 - TOHO海老名 / イオン新百合ヶ丘 / 109南町田 / イオン座間</title>
+  <meta name="description" content="TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズ南町田グランベリーパーク、イオンシネマ座間の上映スケジュールと空席状況をリアルタイム・MAX方式で一括比較。">
+  
+  <!-- CSSスタイルシート -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- メインヘッダー -->
+  <header>
+    <div class="container header-content">
+      <div class="logo-group">
+        <h1>🎬 映画館上映スケジュール比較</h1>
+        <p class="subtitle">TOHO海老名・イオン新百合ヶ丘・109南町田・イオン座間の最新スケジュール＆空席状況を一括チェック</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツエリア -->
+  <main class="container">
+
+    <!-- コントロールバー（検索・更新ボタン・最終更新時間） -->
+    <section class="controls-bar" aria-label="操作パネル">
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" id="movie-search-input" placeholder="作品名で絞り込み検索..." aria-label="映画作品名で検索">
+      </div>
+
+      <div class="status-info">
+        <span id="status-update-time">データ取得中...</span>
+        <button id="btn-refresh" class="btn-refresh" aria-label="スケジュール最新情報を手動更新">
+          <span class="refresh-icon">🔄</span> 最新情報に更新
+        </button>
+      </div>
+    </section>
+
+    <!-- 凡例 (Legend) -->
+    <div class="legend-bar">
+      <span>空席状況の見方:</span>
+      <div class="legend-item"><span class="status-badge status-plenty">◎</span> 余裕あり</div>
+      <div class="legend-item"><span class="status-badge status-available">◯</span> 予約可能</div>
+      <div class="legend-item"><span class="status-badge status-few">△</span> 残りわずか</div>
+      <div class="legend-item"><span class="status-badge status-full">×</span> 満席</div>
+    </div>
+
+    <!-- マトリクス比較表描画エリア -->
+    <section class="matrix-section" style="margin-top: 15px;">
+      <div id="matrix-table-container" class="matrix-container">
+        <!-- JSにより動的にマトリクス表が挿入されます -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 空席・上映詳細モーダル -->
+  <div id="schedule-modal-overlay" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-movie-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span id="modal-cinema-name" style="font-size: 0.85rem; color: var(--accent-blue); font-weight: 600;">映画館名</span>
+          <h2 id="modal-movie-title" class="modal-title">作品タイトル</h2>
+        </div>
+        <button id="modal-close-btn" class="modal-close" aria-label="閉じる">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-info-row">
+          <span style="color: var(--text-secondary);">上映時間:</span>
+          <strong id="modal-time" style="color: var(--text-primary);">--:--</strong>
+        </div>
+        <div class="modal-info-row">
+          <span style="color: var(--text-secondary);">スクリーン:</span>
+          <span id="modal-screen" style="color: var(--text-primary);">SCREEN --</span>
+        </div>
+        <div class="modal-info-row">
+          <span style="color: var(--text-secondary);">空席ステータス:</span>
+          <span id="modal-status" style="font-weight: 700; color: var(--accent-cyan);">--</span>
+        </div>
+      </div>
+
+      <a id="modal-reserve-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn-reserve">
+        映画館の予約サイトへ進む ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- JavaScriptモジュール群 -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

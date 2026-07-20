@@ -25,7 +25,7 @@
 
 5. **[Issue #5] スタイリッシュなダークテーマ UI/UX とレスポンシブ比較表・モーダルの実装**
    - 詳細チケット: [ISSUE/issue-5.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-5.md)
-   - ステータス: 進行中 (In Progress)
+   - ステータス: 完了 (Completed)
 
 6. **[Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備**
    - 詳細チケット: [ISSUE/issue-6.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-6.md)

@@ -1,0 +1,301 @@
+/* ==========================================================================
+   cinema-schedule-comparison - components.css
+   マトリクス表、空席バッジ、モーダル、ローディング画面
+   ========================================================================== */
+
+/* 比較マトリクス表コンテナ */
+.matrix-container {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glass);
+  overflow-x: auto;
+  position: relative;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 900px;
+}
+
+/* ヘッダー行 */
+.matrix-table th {
+  background: var(--bg-secondary);
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 左端固定列（作品名） */
+.matrix-table th.col-movie-title,
+.matrix-table td.col-movie-title {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  background: #101624;
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  border-right: 2px solid var(--border-color);
+}
+
+.matrix-table th.col-movie-title {
+  z-index: 20;
+  text-align: left;
+}
+
+.matrix-table td.col-movie-title {
+  padding: 18px 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.movie-title-text {
+  display: block;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+/* データセル */
+.matrix-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: top;
+  text-align: center;
+}
+
+.matrix-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.matrix-table tr:hover td.col-movie-title {
+  background-color: #161e30;
+}
+
+/* 映画館ヘッダーセル内容 */
+.cinema-header-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cinema-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cinema-brand-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+/* スケジュールセルリスト */
+.schedule-cell-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.schedule-item-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.schedule-item-card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.schedule-time {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.schedule-format {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+/* 空席ステータスバッジ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.status-badge.status-plenty {
+  background-color: var(--status-plenty);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.status-badge.status-available {
+  background-color: var(--status-available);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.status-badge.status-few {
+  background-color: var(--status-few);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.status-badge.status-full {
+  background-color: var(--status-full);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.no-schedule {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 15px 0;
+}
+
+/* 凡例 (Legend) */
+.legend-bar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 空席詳細モーダル */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition-fast);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: var(--shadow-glass);
+  transform: translateY(20px);
+  transition: var(--transition-fast);
+}
+
+.modal-overlay.active .modal-card {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+}
+
+.modal-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-reserve {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  color: #0a0e17;
+  font-weight: 700;
+  padding: 12px 0;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.btn-reserve:hover {
+  box-shadow: var(--shadow-neon);
+}
