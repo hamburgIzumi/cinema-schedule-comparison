@@ -1,26 +1,26 @@
 # 映画館上映スケジュール比較 (Cinema Schedule Comparison)
 
-複数映画館の上映スケジュールおよび空席状況をリアルタイム・動的に比較閲覧できるWebアプリケーションです。
-
-## 概要
-
-本システムは、対象となる映画館の最新上映スケジュールをCORSプロキシ経由で動的に取得し、全上映作品を「MAX方式」でユニーク化して、作品×映画館のマトリクス表形式で直感的に比較・確認できます。
-
-### 特徴
-- **リアルタイム動的取得**: スナップショット方式（静的ファイル）ではなく、ブラウザから各映画館の最新情報をオンデマンドで取得。
-- **柔軟な設定変更**: `config/cinemas.json` を編集するだけで比較対象の映画館を追加・変更可能。
-- **MAX方式での一括比較**: どの映画館でどの作品がどの時間・スクリーンで上映されているかをマトリクス表で網羅。
-- **空席情報の確認**: ◎（余裕あり）、◯（予約可能）、△（残りわずか）、×（満席）などのステータス表示および各公式サイト・予約ページヘの直リンクを提供。
-- **モダンUI/UX**: ガラスモルフィズムを取り入れたダークモードデザインと完全レスポンシブ表示。
+複数映画館（TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズ南町田グランベリーパーク、イオンシネマ座間）の上映スケジュールおよび空席状況をリアルタイム・動的に比較閲覧できるWebアプリケーションです。
 
 ---
 
-## フォルダ構成とファイル説明
+## 🌟 特徴
+
+- **リアルタイム動的取得**: スナップショット方式（静的ファイル）ではなく、ユーザーがページを開いた際や更新ボタンを押した際に、CORSプロキシ経由で最新の上映スケジュール・空席状況を動的フェッチして表示します。
+- **MAX方式作品統合**: 対象となる各映画館から取得した作品データを網羅・名寄せしてユニーク化。作品（行）× 映画館（列）のマトリクス表で一括比較が可能です。
+- **柔軟な設定ファイル**: `config/cinemas.json` を編集するだけで、比較対象の映画館名、URL、ロゴカラーなどを簡単に変更・追加できます。
+- **空席情報＆予約リンク**: ◎（余裕あり）、◯（予約可能）、△（残りわずか）、×（満席）を視覚的なカラーバッジで表示。上映枠をクリックすると詳細確認および各映画館公式サイトの予約ページヘ直接遷移できます。
+- **モダンUI/UX**: ガラスモルフィズムを取り入れたダークモードテーマ、作品名固定列付きレスポンシブ比較表、検索フィルター機能を搭載。
+
+---
+
+## 📁 フォルダ構成とファイル説明
 
 ```
 cinema-schedule-comparison/
-├── README.md                    # プロジェクト概要・使い方・構成ドキュメント
+├── README.md                    # 本ドキュメント（全体概要・構成・使い方）
 ├── ISSUES.md                    # Issue管理インデックスドキュメント
+├── index.html                   # アプリメインWebページ
 ├── ISSUE/                       # 個別Issueチケット管理フォルダ
 │   ├── issue-1.md               # [Issue #1] 基本構造・ブランチ構築
 │   ├── issue-2.md               # [Issue #2] 設定ファイル cinemas.json
@@ -29,32 +29,32 @@ cinema-schedule-comparison/
 │   ├── issue-5.md               # [Issue #5] UI/UX・マトリクス表
 │   └── issue-6.md               # [Issue #6] 検証・最終PR準備
 ├── prompt/
-│   └── prompt.md                # ユーザー要件定義ファイル
+│   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/
-│   └── cinemas.json             # 比較対象映画館の設定ファイル（名前、URL、抽出ルール等）
+│   └── cinemas.json             # 比較対象映画館の設定ファイル
 ├── css/
-│   ├── main.css                 # デザインシステム・テーマ変数・ベーススタイル
-│   └── components.css           # マトリクス表・空席バッジ・モーダル・フィルターCSS
+│   ├── main.css                 # デザインシステム・ダークモード・ベーススタイル
+│   └── components.css           # マトリクス表・空席バッジ・モーダルCSS
 └── js/
-    ├── app.js                   # 全体初期化・コントロール・更新制御
-    ├── configLoader.js          # config/cinemas.json の動的読み込みモジュール
+    ├── app.js                   # 全体初期化・イベント制御・更新統括
+    ├── configLoader.js          # cinemas.json 読み込みモジュール
     ├── fetchers/
-    │   ├── corsProxy.js         # CORSプロキシ経由の通信モジュール
-    │   ├── tohoFetcher.js       # TOHOシネマズ（海老名）用データ抽出モジュール
-    │   ├── aeonFetcher.js       # イオンシネマ（新百合ヶ丘・座間）用データ抽出モジュール
-    │   └── tokyu109Fetcher.js   # 109シネマズ（南町田グランベリーパーク）用データ抽出モジュール
-    ├── scheduleUnifier.js       # MAX方式作品タイトルユニーク化・マトリクスデータ統合
-    └── uiRender.js              # HTMLマトリクス表および空席モーダルの動的描画
+    │   ├── corsProxy.js         # CORSプロキシ経由の通信処理
+    │   ├── tohoFetcher.js       # TOHOシネマズ海老名用動的パース
+    │   ├── aeonFetcher.js       # イオンシネマ（新百合ヶ丘・座間）用動的パース
+    │   └── tokyu109Fetcher.js   # 109シネマズ南町田用動的パース
+    ├── scheduleUnifier.js       # MAX方式作品ユニーク化＆マトリクス構造生成
+    └── uiRender.js              # DOM描画・検索フィルター・モーダル制御
 ```
 
-### ファイル詳細説明
+### ファイル詳細説明一覧
 
 | ファイル / フォルダ | ステータス | 説明 |
 | :--- | :--- | :--- |
 | `README.md` | 作成済 | プロジェクトの概要、ディレクトリ構成、各ファイルの説明、利用手順を記載するメインドキュメント。 |
 | `ISSUES.md` | 作成済 | 全Issueの起票状況および概要をまとめたインデックスドキュメント。 |
 | `ISSUE/` | 作成済 | 個別Issueの目的・実装内容・完了条件を管理するMarkdownチケット格納フォルダ。 |
-| `config/cinemas.json` | **[Issue #2] 作成済** | 比較対象の映画館名、URL、識別子、ロゴなどを定義する設定ファイル。 |
+| `config/cinemas.json` | **[Issue #2] 作成済** | 比較対象の映画館名、URL、識別子、ブランドカラー等を定義する設定ファイル。 |
 | `js/configLoader.js` | **[Issue #2] 作成済** | 外部設定ファイル `config/cinemas.json` を fetch して提供するモジュール。 |
 | `js/fetchers/corsProxy.js` | **[Issue #3] 作成済** | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONを動的フェッチするモジュール。 |
 | `js/fetchers/tohoFetcher.js` | **[Issue #3] 作成済** | TOHOシネマズ（海老名）用の上映スケジュール・空席動的パースモジュール。 |
@@ -69,17 +69,30 @@ cinema-schedule-comparison/
 
 ---
 
-## 初回比較対象の映画館
+## 🚀 ローカルでの動作方法
 
-1. **TOHOシネマズ海老名**: `https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do`
-2. **イオンシネマ新百合ヶ丘**: `https://theater.aeoncinema.com/theaters/shinyurigaoka/`
-3. **109シネマズ南町田グランベリーパーク**: `https://109cinemas.net/grandberrypark/`
-4. **イオンシネマ座間**: `https://www.aeoncinema.com/cinema/zama/`
+1. リポジトリをクローンまたはダウンロードします。
+2. ディレクトリに移動し、ローカルWebサーバーを起動します。
+   ```bash
+   npx serve .
+   # または
+   python3 -m http.server 8000
+   ```
+3. ブラウザで `http://localhost:8000` にアクセスします。
 
 ---
 
-## 開発ルール (`RULES.md` 抜粋)
+## 🌐 GitHub Pages 公開手順 (無料サービス)
 
-- Gitブランチ戦略: `main` -> `work` -> `feat/issue-X-...`
-- コミット・PRメッセージ: 日本語
-- コメントアウト: 日本語で記述
+1. リポジトリの `Settings` -> `Pages` タブに移動します。
+2. `Source` で `Deploy from a branch` を選択し、`Branch` に `main` (または `work`) / `/ (root)` を設定します。
+3. `Save` を押すと数分でサイトが無料公開されます。
+
+---
+
+## 📋 初回対象映画館のURL
+
+- **TOHOシネマズ海老名**: `https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do`
+- **イオンシネマ新百合ヶ丘**: `https://theater.aeoncinema.com/theaters/shinyurigaoka/`
+- **109シネマズ南町田グランベリーパーク**: `https://109cinemas.net/grandberrypark/`
+- **イオンシネマ座間**: `https://www.aeoncinema.com/cinema/zama/`

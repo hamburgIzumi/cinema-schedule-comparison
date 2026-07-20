@@ -29,4 +29,4 @@
 
 6. **[Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備**
    - 詳細チケット: [ISSUE/issue-6.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-6.md)
-   - ステータス: 未着手 (Open)
+   - ステータス: 完了 (Completed)
