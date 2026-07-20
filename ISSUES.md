@@ -50,3 +50,7 @@
 11. **[Issue #11] Cloudflare Workers によるリアルタイムプロキシAPI構築と連携**
    - 詳細チケット: [ISSUE/issue-11.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-11.md)
    - ステータス: 完了 (Completed)
+
+12. **[Issue #12] Cloudflare Workers 内部パースロジックの精密化とデバッグ**
+   - 詳細チケット: [ISSUE/issue-12.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-12.md)
+   - ステータス: 完了 (Completed)
