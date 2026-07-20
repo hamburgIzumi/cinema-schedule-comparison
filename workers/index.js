@@ -1,7 +1,7 @@
 /**
  * @file index.js (Cloudflare Workers)
- * @description イオンシネマ専用 リアルタイム上映スケジュールプロキシAPI
- * (https://www.aeoncinema.com/cinema2/all/movie/ から実作品タイトルを本物パース)
+ * @description イオンシネマ専用 公式リアルタイムスケジュールAPIプロキシ
+ * (https://theater.aeoncinema.com/schedule/v2/data/{code}/schedule.json より本物データ抽出)
  */
 
 export default {
@@ -24,7 +24,7 @@ export default {
     const dateStr = url.searchParams.get('date') || getTodayStr();
 
     try {
-      const resultData = await fetchAeon(cinemaId, dateStr);
+      const resultData = await fetchAeonOfficialSchedule(cinemaId, dateStr);
 
       return new Response(JSON.stringify(resultData, null, 2), {
         headers: corsHeaders
@@ -44,25 +44,29 @@ export default {
 };
 
 /**
- * イオンシネマ（新百合ヶ丘・座間） リアルタイムフェッチ
+ * イオンシネマ公式スケジュールJSONフェッチ (08:20~10:10 等の実時刻取得)
  */
-async function fetchAeon(cinemaId, dateStr) {
+async function fetchAeonOfficialSchedule(cinemaId, dateStr) {
   const code = cinemaId.includes('zama') ? 'zama' : 'shinyurigaoka';
   const cinemaName = cinemaId.includes('zama') ? "イオンシネマ 座間" : "イオンシネマ 新百合ヶ丘";
 
-  // イオンシネマ全上映・公開作品一覧ページ
-  const targetUrl = `https://www.aeoncinema.com/cinema2/all/movie/`;
+  const v = getTimestampParam();
+  const targetUrl = `https://theater.aeoncinema.com/schedule/v2/data/${code}/schedule.json?v=${v}`;
 
   const response = await fetch(targetUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Referer': 'https://www.aeoncinema.com/'
+      'Accept': 'application/json, text/plain, */*',
+      'Referer': `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`
     }
   });
 
-  const html = await response.text();
-  const movies = parseAeonRealMovies(html, `https://theater.aeoncinema.com/theaters/${code}/`);
+  if (!response.ok) {
+    throw new Error(`イオンシネマ公式APIからの取得に失敗しました (Status: ${response.status})`);
+  }
+
+  const json = await response.json();
+  const movies = parseAeonScheduleJson(json, dateStr, `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`);
 
   return {
     cinemaId: cinemaId,
@@ -74,38 +78,106 @@ async function fetchAeon(cinemaId, dateStr) {
 }
 
 /**
- * イオンシネマ公式実作品タイトルパース処理
- * (p-movie__title 内の <h3> から本物の作品名を完全抽出)
+ * イオンシネマ公式 JSON パーサー
  */
-function parseAeonRealMovies(html, baseUrl) {
-  const movies = [];
-  const matches = html.matchAll(/<div[^>]*class="?p-movie__title"?.*?>\s*<h3[^>]*>(.*?)<\/h3>/gi);
+function parseAeonScheduleJson(json, dateStr, reserveUrl) {
+  const moviesMap = new Map();
+  const dateData = json[dateStr];
 
-  for (const m of matches) {
-    const rawTitle = cleanText(m[1]);
-    if (rawTitle && rawTitle.length > 1) {
-      movies.push({
-        title: rawTitle,
-        schedules: []
-      });
+  if (!dateData) return [];
+
+  // 各映画グループ ID をループ処理
+  for (const groupKey in dateData) {
+    const slots = dateData[groupKey];
+    if (!Array.isArray(slots)) continue;
+
+    for (const slot of slots) {
+      if (!slot.name || !slot.name.ja) continue;
+
+      // 作品名の整形 (例: "吹替　君と花火と約束と" -> "君と花火と約束と")
+      let rawTitle = slot.name.ja
+        .replace(/^(?:字幕|吹替|IMAX|4DX|3D|2D|ULTIRA|［字幕］|［吹替］|【字幕】|【吹替】)\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!rawTitle) continue;
+
+      // 日本時間 (JST: UTC+9) への変換
+      const startUtc = new Date(slot.startDate);
+      const endUtc = new Date(slot.endDate);
+
+      const startJst = new Date(startUtc.getTime() + 9 * 60 * 60 * 1000);
+      const endJst = new Date(endUtc.getTime() + 9 * 60 * 60 * 1000);
+
+      const startTimeStr = formatTime(startJst);
+      const endTimeStr = formatTime(endJst);
+      const fullTimeStr = `${startTimeStr} - ${endTimeStr}`;
+
+      // 残席数・空席ステータスの計算
+      const totalCap = slot.maximumAttendeeCapacity || 100;
+      const remainCap = slot.remainingAttendeeCapacity || 0;
+      const ratio = remainCap / totalCap;
+
+      let status = '◯';
+      let statusText = '予約可能';
+
+      if (remainCap === 0) {
+        status = '×';
+        statusText = '満席';
+      } else if (ratio > 0.5) {
+        status = '◎';
+        statusText = '余裕あり';
+      } else if (ratio <= 0.2) {
+        status = '△';
+        statusText = '残りわずか';
+      }
+
+      // スクリーン名
+      const screenName = (slot.location && slot.location.name && slot.location.name.ja)
+        ? slot.location.name.ja
+        : 'スクリーン';
+
+      // フォーマット判定
+      let format = '2D';
+      if (slot.name.ja.includes('3D')) format = '3D';
+      else if (slot.name.ja.includes('字幕')) format = '2D / 字幕';
+      else if (slot.name.ja.includes('吹替')) format = '2D / 吹替';
+
+      const scheduleObj = {
+        time: fullTimeStr,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+        screen: screenName,
+        format: format,
+        status: status,
+        statusText: statusText,
+        reserveUrl: reserveUrl
+      };
+
+      if (!moviesMap.has(rawTitle)) {
+        moviesMap.set(rawTitle, {
+          title: rawTitle,
+          schedules: []
+        });
+      }
+
+      moviesMap.get(rawTitle).schedules.push(scheduleObj);
     }
   }
 
-  // 重複タイトルを除外
-  const uniqueMovies = [];
-  const seen = new Set();
-  movies.forEach(m => {
-    if (!seen.has(m.title)) {
-      seen.add(m.title);
-      uniqueMovies.push(m);
-    }
+  // 時間順にソート
+  const resultMovies = Array.from(moviesMap.values());
+  resultMovies.forEach(m => {
+    m.schedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
   });
 
-  return uniqueMovies;
+  return resultMovies;
 }
 
-function cleanText(text) {
-  return text ? text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : '';
+function formatTime(dateObj) {
+  const hh = String(dateObj.getUTCHours()).padStart(2, '0');
+  const mm = String(dateObj.getUTCMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
 }
 
 function getTodayStr() {
@@ -114,4 +186,14 @@ function getTodayStr() {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
   return `${yyyy}${mm}${dd}`;
+}
+
+function getTimestampParam() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}${hh}${min}`;
 }
