@@ -299,3 +299,66 @@
 .btn-reserve:hover {
   box-shadow: var(--shadow-neon);
 }
+
+/* 日付選択タブバー */
+.date-tabs-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 4px 16px 4px;
+  margin-bottom: 15px;
+  scrollbar-width: thin;
+}
+
+.date-tab-item {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  min-width: 110px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: var(--transition-fast);
+  user-select: none;
+}
+
+.date-tab-item:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  background: rgba(79, 172, 254, 0.1);
+}
+
+.date-tab-item.active {
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.25), rgba(127, 0, 255, 0.25));
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+}
+
+.date-tab-day {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.date-tab-date {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.date-tab-item.active .date-tab-day,
+.date-tab-item.active .date-tab-date {
+  color: var(--accent-cyan);
+}
+
+.date-tab-item.sat .date-tab-day {
+  color: #60a5fa;
+}
+
+.date-tab-item.sun .date-tab-day {
+  color: #f87171;
+}
+
