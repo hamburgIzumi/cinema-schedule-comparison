@@ -12,7 +12,7 @@ class CinemaApp {
     this.cinemasConfig = [];
     this.fetchers = [];
     this.scheduleUnifier = new ScheduleUnifier();
-    this.uiRender = new UIRender();
+    this.uiRender = new UIRender('matrix-table-container', 'schedule-modal-overlay', 'date-tabs-container');
 
     this.selectedDate = this.getTodayDateString();
     this.unifiedData = null;
@@ -39,8 +39,13 @@ class CinemaApp {
       this.initializeFetchers();
       this.setupEventListeners();
 
-      this.uiRender.renderDateSelector(this.selectedDate, (newDate) => {
-        this.selectedDate = newDate;
+      // 日付選択タブのレンダリング
+      const selectedDateObj = this.parseDateString(this.selectedDate);
+      this.uiRender.renderDateTabs(selectedDateObj, (newDateObj) => {
+        const yyyy = newDateObj.getFullYear();
+        const mm = String(newDateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(newDateObj.getDate()).padStart(2, '0');
+        this.selectedDate = `${yyyy}${mm}${dd}`;
         this.loadSchedules();
       });
 
@@ -52,19 +57,28 @@ class CinemaApp {
     }
   }
 
+  parseDateString(dateStr) {
+    const yyyy = parseInt(dateStr.substring(0, 4), 10);
+    const mm = parseInt(dateStr.substring(4, 6), 10) - 1;
+    const dd = parseInt(dateStr.substring(6, 8), 10);
+    return new Date(yyyy, mm, dd);
+  }
+
   initializeFetchers() {
     this.fetchers = this.cinemasConfig.map(config => new AeonFetcher(config));
   }
 
   setupEventListeners() {
-    const refreshBtn = document.getElementById('refresh-btn');
+    // btn-refresh または refresh-btn の両対応
+    const refreshBtn = document.getElementById('btn-refresh') || document.getElementById('refresh-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         this.loadSchedules();
       });
     }
 
-    const searchInput = document.getElementById('search-movie-input');
+    // movie-search-input または search-movie-input の両対応
+    const searchInput = document.getElementById('movie-search-input') || document.getElementById('search-movie-input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         if (this.unifiedData) {
@@ -76,7 +90,7 @@ class CinemaApp {
 
   async loadSchedules() {
     this.uiRender.renderSkeleton();
-    const statusText = document.getElementById('status-text');
+    const statusText = document.getElementById('status-update-time') || document.getElementById('status-text');
     if (statusText) {
       statusText.textContent = '最新の上映スケジュールを取得中...';
     }
@@ -87,7 +101,7 @@ class CinemaApp {
 
       this.unifiedData = this.scheduleUnifier.unify(this.cinemasConfig, cinemaSchedules, this.selectedDate);
 
-      const searchInput = document.getElementById('search-movie-input');
+      const searchInput = document.getElementById('movie-search-input') || document.getElementById('search-movie-input');
       const filterText = searchInput ? searchInput.value : '';
       this.uiRender.renderMatrixTable(this.unifiedData, filterText);
 

@@ -1,9 +1,9 @@
 /* ==========================================================================
    cinema-schedule-comparison - components.css
-   マトリクス表、空席バッジ、モーダル、ローディング画面
+   マトリクス表、Sticky固定ヘッダー、レスポンシブ、空席バッジ、モーダル
    ========================================================================== */
 
-/* 比較マトリクス表コンテナ */
+/* 比較マトリクス表コンテナ (縦横スクロール可能 + Stickyヘッダー親要素) */
 .matrix-container {
   background: var(--bg-card);
   backdrop-filter: blur(12px);
@@ -11,51 +11,66 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 75vh;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .matrix-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 900px;
+  min-width: 700px;
 }
 
-/* ヘッダー行 */
+/* 劇場名ヘッダー (縦スクロール時トップ固定) */
 .matrix-table th {
-  background: var(--bg-secondary);
+  background: #141d30;
   padding: 16px 20px;
   text-align: center;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
   border-bottom: 2px solid var(--border-color);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 30;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 /* 左端固定列（作品名） */
-.matrix-table th.col-movie-title,
 .matrix-table td.col-movie-title {
   position: sticky;
   left: 0;
   z-index: 15;
   background: #101624;
-  width: 260px;
-  min-width: 260px;
-  max-width: 260px;
-  border-right: 2px solid var(--border-color);
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  border-right: 2px solid var(--accent-cyan);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
+/* 左上角交差セル (最前面・縦横両方向トップ＆レフト固定) */
 .matrix-table th.col-movie-title {
-  z-index: 20;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  background: #182238;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
   text-align: left;
+  border-right: 2px solid var(--accent-cyan);
+  border-bottom: 2px solid var(--border-color);
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .matrix-table td.col-movie-title {
-  padding: 18px 20px;
+  padding: 16px 18px;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.4;
@@ -63,25 +78,35 @@
 
 .movie-title-text {
   display: block;
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   word-break: break-word;
 }
 
-/* データセル */
+/* データセル & カラム縦区切り線 */
 .matrix-table td {
   padding: 14px;
   border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
   vertical-align: top;
   text-align: center;
 }
 
-.matrix-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+/* 行のゼブラパターン (縞表示) */
+.matrix-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.035);
 }
 
-.matrix-table tr:hover td.col-movie-title {
-  background-color: #161e30;
+.matrix-table tbody tr:nth-child(even) td.col-movie-title {
+  background-color: #141d30;
+}
+
+/* 行ホバー時のハイライト表現 */
+.matrix-table tbody tr:hover td {
+  background-color: rgba(79, 172, 254, 0.08) !important;
+}
+
+.matrix-table tbody tr:hover td.col-movie-title {
+  background-color: #1a2740 !important;
 }
 
 /* 映画館ヘッダーセル内容 */
@@ -231,7 +256,7 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 30px;
+  padding: 24px;
   width: 90%;
   max-width: 480px;
   box-shadow: var(--shadow-glass);
@@ -308,14 +333,15 @@
   padding: 8px 4px 16px 4px;
   margin-bottom: 15px;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .date-tab-item {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 10px 18px;
-  min-width: 110px;
+  padding: 10px 16px;
+  min-width: 100px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -323,6 +349,7 @@
   gap: 2px;
   transition: var(--transition-fast);
   user-select: none;
+  flex-shrink: 0;
 }
 
 .date-tab-item:hover {
@@ -344,7 +371,7 @@
 }
 
 .date-tab-date {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -362,36 +389,83 @@
   color: #f87171;
 }
 
-/* デモ（ダミー）データ表示警告バッジ */
-.demo-data-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-  margin-top: 4px;
-  animation: pulse-demo 2s infinite;
+/* ==========================================================================
+   レスポンシブデザイン (メディアクエリ)
+   ========================================================================== */
+
+/* タブレット / スマホ画面 (768px以下) */
+@media (max-width: 768px) {
+  .matrix-container {
+    max-height: 65vh;
+  }
+
+  .matrix-table {
+    min-width: 600px;
+  }
+
+  .matrix-table th.col-movie-title,
+  .matrix-table td.col-movie-title {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    padding: 12px;
+  }
+
+  .movie-title-text {
+    font-size: 0.88rem;
+  }
+
+  .matrix-table th {
+    padding: 12px 10px;
+    font-size: 0.88rem;
+  }
+
+  .cinema-name {
+    font-size: 0.9rem;
+  }
+
+  .schedule-item-card {
+    padding: 6px 8px;
+    font-size: 0.78rem;
+  }
+
+  .status-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .legend-bar {
+    justify-content: center;
+    gap: 12px;
+    font-size: 0.78rem;
+  }
 }
 
-@keyframes pulse-demo {
-  0% { opacity: 0.9; }
-  50% { opacity: 1; transform: scale(1.03); }
-  100% { opacity: 0.9; }
+/* 小型スマホ画面 (480px以下) */
+@media (max-width: 480px) {
+  .matrix-container {
+    max-height: 60vh;
+  }
+
+  .matrix-table th.col-movie-title,
+  .matrix-table td.col-movie-title {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    padding: 10px 8px;
+  }
+
+  .movie-title-text {
+    font-size: 0.82rem;
+  }
+
+  .date-tab-item {
+    padding: 8px 12px;
+    min-width: 85px;
+  }
+
+  .date-tab-date {
+    font-size: 0.9rem;
+  }
 }
-
-.demo-data-notice {
-  font-size: 0.78rem;
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px dashed rgba(245, 158, 11, 0.4);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  margin-top: 10px;
-}
-
-

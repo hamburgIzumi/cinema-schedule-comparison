@@ -3,19 +3,43 @@
  * @description マトリクス比較表のレンダリング、検索フィルター、詳細モーダル表示を行うUI制御モジュール
  */
 
-export class UiRender {
-  constructor(tableContainerId, modalOverlayId, dateTabsContainerId = 'date-tabs-container') {
+export class UIRender {
+  constructor(tableContainerId = 'table-container', modalOverlayId = 'modal-overlay', dateTabsContainerId = 'date-tabs-container') {
     this.tableContainer = document.getElementById(tableContainerId);
     this.modalOverlay = document.getElementById(modalOverlayId);
     this.dateTabsContainer = document.getElementById(dateTabsContainerId);
   }
 
   /**
-   * 当日を含む7日間の日付ナビゲーションタブをレンダリングする
-   * @param {Date} selectedDate - 現在選択中の日付
-   * @param {Function} onDateSelectCallback - 日付切り替え時のコールバック関数
+   * ローディングスケルトンをレンダリングする
    */
-  renderDateTabs(selectedDate, onDateSelectCallback) {
+  renderSkeleton() {
+    if (!this.tableContainer) return;
+    this.tableContainer.innerHTML = `
+      <div class="skeleton-loader" style="text-align: center; padding: 40px;">
+        <div class="spinner" style="font-size: 2rem; margin-bottom: 15px;">⏳</div>
+        <p style="color: var(--text-secondary, #94a3b8);">最新の上映スケジュール・空席状況を取得中...</p>
+      </div>
+    `;
+  }
+
+  /**
+   * エラーメッセージをレンダリングする
+   */
+  renderError(title, message) {
+    if (!this.tableContainer) return;
+    this.tableContainer.innerHTML = `
+      <div class="error-box" style="text-align: center; padding: 40px; color: #ef4444;">
+        <div style="font-size: 2rem; margin-bottom: 10px;">⚠️ ${this.escapeHtml(title)}</div>
+        <p>${this.escapeHtml(message)}</p>
+      </div>
+    `;
+  }
+
+  /**
+   * 日付選択ナビゲーション (日付タブ / renderDateSelector 互換)
+   */
+  renderDateSelector(selectedDateStr, onDateSelectCallback) {
     if (!this.dateTabsContainer) return;
 
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
@@ -28,7 +52,12 @@ export class UiRender {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
 
-      const isSelected = selectedDate.getDate() === d.getDate() && selectedDate.getMonth() === d.getMonth();
+      const yyyy = d.getFullYear();
+      const mmStr = String(d.getMonth() + 1).padStart(2, '0');
+      const ddStr = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}${mmStr}${ddStr}`;
+
+      const isSelected = dateStr === selectedDateStr;
       const dayOfWeek = d.getDay();
       const month = d.getMonth() + 1;
       const dateNum = d.getDate();
@@ -43,7 +72,7 @@ export class UiRender {
       else if (i === 1) dayLabel = '明日';
 
       html += `
-        <div class="date-tab-item ${dayClass} ${isSelected ? 'active' : ''}" data-date="${d.toISOString()}">
+        <div class="date-tab-item ${dayClass} ${isSelected ? 'active' : ''}" data-datestr="${dateStr}">
           <span class="date-tab-day">${dayLabel}</span>
           <span class="date-tab-date">${labelText} (${dayNames[dayOfWeek]})</span>
         </div>
@@ -52,23 +81,38 @@ export class UiRender {
 
     this.dateTabsContainer.innerHTML = html;
 
-    // タブクリックイベント
     const tabItems = this.dateTabsContainer.querySelectorAll('.date-tab-item');
     tabItems.forEach(item => {
       item.addEventListener('click', () => {
-        const dateStr = item.dataset.date;
-        const newDate = new Date(dateStr);
+        const dateStr = item.dataset.datestr;
         if (onDateSelectCallback) {
-          onDateSelectCallback(newDate);
+          onDateSelectCallback(dateStr);
         }
       });
     });
   }
 
   /**
+   * 当日を含む7日間の日付ナビゲーションタブをレンダリングする (Dateオブジェクト対応互換)
+   */
+  renderDateTabs(selectedDate, onDateSelectCallback) {
+    const yyyy = selectedDate.getFullYear();
+    const mmStr = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const ddStr = String(selectedDate.getDate()).padStart(2, '0');
+    const selectedDateStr = `${yyyy}${mmStr}${ddStr}`;
+
+    this.renderDateSelector(selectedDateStr, (newDateStr) => {
+      const year = parseInt(newDateStr.substring(0, 4), 10);
+      const month = parseInt(newDateStr.substring(4, 6), 10) - 1;
+      const day = parseInt(newDateStr.substring(6, 8), 10);
+      if (onDateSelectCallback) {
+        onDateSelectCallback(new Date(year, month, day));
+      }
+    });
+  }
+
+  /**
    * 統合マトリクスデータから比較表HTMLを動的レンダリングする
-   * @param {Object} unifiedData - { cinemas, matrix }
-   * @param {string} filterText - 検索フィルター文字列
    */
   renderMatrixTable(unifiedData, filterText = '') {
     if (!this.tableContainer) return;
@@ -76,7 +120,6 @@ export class UiRender {
     const { cinemas, matrix } = unifiedData;
     const lowerFilter = filterText.toLowerCase().trim();
 
-    // フィルターに合致する作品のみに絞り込み
     const filteredMatrix = matrix.filter(row => {
       if (!lowerFilter) return true;
       return row.title.toLowerCase().includes(lowerFilter);
@@ -84,7 +127,7 @@ export class UiRender {
 
     if (filteredMatrix.length === 0) {
       this.tableContainer.innerHTML = `
-        <div class="no-schedule" style="text-align: center; padding: 40px;">
+        <div class="no-schedule" style="text-align: center; padding: 40px; color: var(--text-secondary, #94a3b8);">
           該当する映画作品が見つかりませんでした。
         </div>
       `;
@@ -98,7 +141,6 @@ export class UiRender {
             <th class="col-movie-title">上映作品 (全${filteredMatrix.length}作品)</th>
     `;
 
-    // 映画館列ヘッダー
     cinemas.forEach(cinema => {
       html += `
         <th>
@@ -120,7 +162,6 @@ export class UiRender {
         <tbody>
     `;
 
-    // 作品行
     filteredMatrix.forEach(row => {
       html += `
         <tr>
@@ -141,7 +182,7 @@ export class UiRender {
           schedules.forEach(sched => {
             const badgeClass = this.getStatusBadgeClass(sched.status);
             html += `
-              <div class="schedule-item-card" data-cinema="${this.escapeHtml(cinema.name)}" data-isfallback="${cinema.isFallback ? 'true' : 'false'}" data-movie="${this.escapeHtml(row.title)}" data-time="${this.escapeHtml(sched.time)}" data-screen="${this.escapeHtml(sched.screen)}" data-format="${this.escapeHtml(sched.format)}" data-status="${this.escapeHtml(sched.statusText)}" data-url="${this.escapeHtml(sched.reserveUrl)}">
+              <div class="schedule-item-card" data-cinema="${this.escapeHtml(cinema.name)}" data-movie="${this.escapeHtml(row.title)}" data-time="${this.escapeHtml(sched.time)}" data-screen="${this.escapeHtml(sched.screen)}" data-format="${this.escapeHtml(sched.format)}" data-status="${this.escapeHtml(sched.statusText)}" data-url="${this.escapeHtml(sched.reserveUrl)}">
                 <div>
                   <div class="schedule-time">${this.escapeHtml(sched.time)}</div>
                   <span class="schedule-format">${this.escapeHtml(sched.format || '')}</span>
@@ -168,9 +209,6 @@ export class UiRender {
     this.attachCardEventListeners();
   }
 
-  /**
-   * 空席ステータス記号からバッジのCSSクラスを取得
-   */
   getStatusBadgeClass(status) {
     switch (status) {
       case '◎': return 'status-plenty';
@@ -181,9 +219,6 @@ export class UiRender {
     }
   }
 
-  /**
-   * スケジュールカードのクリックイベントリスナー設定
-   */
   attachCardEventListeners() {
     const cards = this.tableContainer.querySelectorAll('.schedule-item-card');
     cards.forEach(card => {
@@ -195,43 +230,28 @@ export class UiRender {
           screen: card.dataset.screen,
           format: card.dataset.format,
           status: card.dataset.status,
-          url: card.dataset.url,
-          isFallback: card.dataset.isfallback === 'true'
+          url: card.dataset.url
         };
         this.openModal(data);
       });
     });
   }
 
-  /**
-   * 空席詳細モーダルを開く
-   */
   openModal(data) {
     if (!this.modalOverlay) return;
 
-    document.getElementById('modal-cinema-name').textContent = data.cinema;
-    document.getElementById('modal-movie-title').textContent = data.movie;
-    document.getElementById('modal-time').textContent = data.time;
-    document.getElementById('modal-screen').textContent = `${data.screen} (${data.format})`;
-    document.getElementById('modal-status').textContent = data.status;
+    const modalCinemaName = document.getElementById('modal-cinema-name');
+    const modalMovieTitle = document.getElementById('modal-movie-title');
+    const modalTime = document.getElementById('modal-time');
+    const modalScreen = document.getElementById('modal-screen');
+    const modalStatus = document.getElementById('modal-status');
 
-    // デモデータ注記エリア
-    let noticeEl = document.getElementById('modal-demo-notice');
-    if (!noticeEl) {
-      noticeEl = document.createElement('div');
-      noticeEl.id = 'modal-demo-notice';
-      noticeEl.className = 'demo-data-notice';
-      const modalBody = this.modalOverlay.querySelector('.modal-body');
-      if (modalBody) modalBody.appendChild(noticeEl);
-    }
+    if (modalCinemaName) modalCinemaName.textContent = data.cinema;
+    if (modalMovieTitle) modalMovieTitle.textContent = data.movie;
+    if (modalTime) modalTime.textContent = data.time;
+    if (modalScreen) modalScreen.textContent = `${data.screen} (${data.format})`;
+    if (modalStatus) modalStatus.textContent = data.status;
 
-    if (data.isFallback) {
-      noticeEl.style.display = 'block';
-      noticeEl.innerHTML = `⚠️ <strong>【ご注意】</strong> このデータは通信制限等により表示されている接続テスト用サンプル（ダミー）です。最新の実際の状況は「予約サイトヘ進む」ボタンよりご確認ください。`;
-    } else {
-      noticeEl.style.display = 'none';
-    }
-    
     const reserveBtn = document.getElementById('modal-reserve-btn');
     if (reserveBtn) {
       reserveBtn.href = data.url || '#';
@@ -240,18 +260,12 @@ export class UiRender {
     this.modalOverlay.classList.add('active');
   }
 
-  /**
-   * 空席詳細モーダルを閉じる
-   */
   closeModal() {
     if (this.modalOverlay) {
       this.modalOverlay.classList.remove('active');
     }
   }
 
-  /**
-   * エスケープ処理
-   */
   escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>"']/g, match => ({
@@ -263,3 +277,5 @@ export class UiRender {
     })[match]);
   }
 }
+
+export { UIRender as UiRender };
