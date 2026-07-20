@@ -8,6 +8,42 @@ export class UIRender {
     this.tableContainer = document.getElementById(tableContainerId);
     this.modalOverlay = document.getElementById(modalOverlayId);
     this.dateTabsContainer = document.getElementById(dateTabsContainerId);
+
+    // モーダルの閉じるイベント（✕ボタン、背景クリック、Escキー）の自動セットアップ
+    this.setupModalEvents();
+  }
+
+  /**
+   * モーダル閉じるイベントハンドラーの設定
+   */
+  setupModalEvents() {
+    if (!this.modalOverlay) return;
+
+    // ✕ ボタンのクリック
+    const closeBtn = document.getElementById('modal-close-btn') || this.modalOverlay.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeModal();
+      });
+    }
+
+    // モーダル背景領域（オーバーレイ）のクリック
+    this.modalOverlay.addEventListener('click', (e) => {
+      if (e.target === this.modalOverlay) {
+        this.closeModal();
+      }
+    });
+
+    // キーボード Esc キーの押し下げ
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (this.modalOverlay.classList.contains('active')) {
+          this.closeModal();
+        }
+      }
+    });
   }
 
   /**

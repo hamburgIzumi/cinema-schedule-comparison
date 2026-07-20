@@ -70,3 +70,7 @@
 16. **[Issue #16] 劇場名ヘッダーのスクロール固定表示およびモバイル・レスポンシブ対応**
    - 詳細チケット: [ISSUE/issue-16.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-16.md)
    - ステータス: 完了 (Completed)
+
+17. **[Issue #17] 詳細モーダルの閉じる処理不具合およびスマホアクセス時のデータ取得不具合の修正**
+   - 詳細チケット: [ISSUE/issue-17.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-17.md)
+   - ステータス: 完了 (Completed)
