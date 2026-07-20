@@ -17,6 +17,23 @@ export class AeonFetcher {
    * @returns {Promise<Object>} 統一スケジュールデータ構造
    */
   async fetchSchedule(targetDate = new Date()) {
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}${mm}${dd}`;
+
+    // 優先度0: Cloudflare Workers リアルタイムプロキシAPIが設定されている場合
+    if (this.config.workersApiUrl) {
+      try {
+        const workersData = await this.corsProxy.fetchFromWorkersApi(this.config.workersApiUrl, this.config.id, dateStr);
+        if (workersData && workersData.movies && workersData.movies.length > 0) {
+          return workersData;
+        }
+      } catch (e) {
+        console.warn(`AEON Workers API fetch failed for ${this.config.name}:`, e);
+      }
+    }
+
     try {
       return await this.fetchScheduleFromHtml(targetDate);
     } catch (error) {

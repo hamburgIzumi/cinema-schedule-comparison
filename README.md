@@ -32,7 +32,8 @@ cinema-schedule-comparison/
 │   ├── issue-7.md               # [Issue #7] 当日を含む7日間の日付選択・切替
 │   ├── issue-8.md               # [Issue #8] 直APIフェッチと切り戻しスイッチ
 │   ├── issue-9.md               # [Issue #9] デモ（ダミー）データ明確化表示
-│   └── issue-10.md              # [Issue #10] イオンシネマ新URL対応＆パーサー最適化
+│   ├── issue-10.md              # [Issue #10] イオンシネマ新URL対応＆パーサー最適化
+│   └── issue-11.md              # [Issue #11] Cloudflare Workers リアルタイムAPI構築
 ├── prompt/
 │   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/
@@ -94,6 +95,30 @@ cinema-schedule-comparison/
 3. `Save` を押すと数分でサイトが無料公開されます。
 
 ---
+
+---
+
+## ⚡ 100%リアルタイム実データ取得の設定方法（Cloudflare Workers 連携）
+
+本アプリは、**Cloudflare Workers（完全無料のサーバーレスAPI）**を接続することで、各映画館（TOHO・イオン・109）の**100%リアルタイムな上映時間・空席状況（◎ ◯ △ ×）**を完全に表示することが可能です。
+
+### デプロイ手順（無料・約1分で完了）
+
+1. **Cloudflare アカウントの準備**:
+   - [Cloudflare 公式サイト](https://dash.cloudflare.com/) で無料アカウントを作成・ログインします。
+2. **Workers の作成**:
+   - ダッシュボードの左メニュー「Workers & Pages」 > **「Workerを作成」** をクリック。
+   - Worker名（例: `cinema-schedule-proxy`）を設定して作成します。
+3. **コードの貼り付け**:
+   - **「コードを編集」** ボタンを押し、リポジトリ内の [workers/index.js](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/workers/index.js) の内容をそのまま全コピペして上書きし、**「保存してデプロイ」** をクリックします。
+4. **設定ファイルへの反映**:
+   - 発行された Worker のURL（例: `https://cinema-schedule-proxy.xxxx.workers.dev`）をコピーします。
+   - `config/cinemas.json` 内の `"workersApiUrl"` にそのURLを貼り付けます：
+     ```json
+     "workersApiUrl": "https://cinema-schedule-proxy.xxxx.workers.dev"
+     ```
+
+これでアクセス時および手動更新ボタンを押した瞬間の**本物のリアルタイム上映スケジュール・空席データ**が100%表示されるようになります！
 
 ---
 
