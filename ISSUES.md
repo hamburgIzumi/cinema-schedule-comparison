@@ -34,3 +34,7 @@
 7. **[Issue #7] 当日を含む7日間の日付選択・切り替え機能の実装**
    - 詳細チケット: [ISSUE/issue-7.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-7.md)
    - ステータス: 完了 (Completed)
+
+8. **[Issue #8] 各映画館の直接API/データフェッチ方式への切り替えと切り戻し用安全スイッチの実装**
+   - 詳細チケット: [ISSUE/issue-8.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-8.md)
+   - ステータス: 完了 (Completed)

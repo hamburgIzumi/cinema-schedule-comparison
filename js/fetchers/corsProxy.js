@@ -1,6 +1,6 @@
 /**
  * @file corsProxy.js
- * @description CORSプロキシを経由して動的に外部HTML/JSONデータを取得するモジュール
+ * @description CORSプロキシを経由して動的に外部HTML/JSONデータを取得する通信モジュール
  */
 
 export class CorsProxyService {
@@ -34,7 +34,6 @@ export class CorsProxyService {
           continue;
         }
 
-        // allorigins.win の場合は JSON オブジェクト内に contents として格納されている
         if (proxyUrl.includes('allorigins.win')) {
           const json = await response.json();
           if (json && json.contents) {
@@ -53,6 +52,51 @@ export class CorsProxyService {
     }
 
     throw new Error(`すべてのCORSプロキシ経由の通信に失敗しました: ${targetUrl} (${lastError ? lastError.message : ''})`);
+  }
+
+  /**
+   * 指定したURLのJSONデータをCORSプロキシ経由で動的取得する
+   * @param {string} targetUrl - 取得対象のAPI URL
+   * @returns {Promise<Object>} パース済みJSONオブジェクト
+   */
+  async fetchJson(targetUrl) {
+    let lastError = null;
+
+    for (const proxyGenerator of this.proxies) {
+      try {
+        const proxyUrl = proxyGenerator(targetUrl);
+        const response = await fetch(proxyUrl, {
+          headers: {
+            'Accept': 'application/json, text/plain, */*'
+          }
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        if (proxyUrl.includes('allorigins.win')) {
+          const resJson = await response.json();
+          if (resJson && resJson.contents) {
+            try {
+              return typeof resJson.contents === 'string' ? JSON.parse(resJson.contents) : resJson.contents;
+            } catch (e) {
+              return resJson.contents;
+            }
+          }
+        } else {
+          const data = await response.json();
+          if (data) {
+            return data;
+          }
+        }
+      } catch (error) {
+        lastError = error;
+        console.warn(`CORS Proxy JSON failed for ${targetUrl}:`, error);
+      }
+    }
+
+    throw new Error(`すべてのCORSプロキシ経由のJSON通信に失敗しました: ${targetUrl} (${lastError ? lastError.message : ''})`);
   }
 
   /**
