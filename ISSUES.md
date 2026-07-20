@@ -43,6 +43,6 @@
    - 詳細チケット: [ISSUE/issue-9.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-9.md)
    - ステータス: 完了 (Completed)
 
-10. **[Issue #10] 全映画館における本物実データの正常取得ソリューションの実装**
+10. **[Issue #10] イオンシネマ新URL対応（theater.aeoncinema.com）と映画館パーサー最適化**
    - 詳細チケット: [ISSUE/issue-10.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-10.md)
-   - ステータス: 提案・検討中 (Under Review)
+   - ステータス: 完了 (Completed)

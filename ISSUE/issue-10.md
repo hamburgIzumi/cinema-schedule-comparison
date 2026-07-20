@@ -1,16 +1,19 @@
-# [Issue #10] 全映画館における本物実データの正常取得ソリューションの実装
+# [Issue #10] イオンシネマ新URL対応（theater.aeoncinema.com）と映画館パーサー最適化
 
-- **ステータス**: 検討・提案中 (Under Review)
-- **担当**: 役割A (プロジェクトマネージャー) / 役割B (フロントエンド開発)
-- **ブランチ**: `work`
+- **ステータス**: 完了 (Completed)
+- **担当**: 役割B (フロントエンド開発)
+- **ブランチ**: `feat/issue-10-url-optimize` -> `work`
 
 ## 1. 目的
-パブリックCORSプロキシの遮断により全映画館でダミーデータになってしまう問題を解決し、4映画館すべての本物の実データ（上映作品・時刻・空席状況）を100%確実に正常表示させる。
+イオンシネマの最新ドメイン（`https://theater.aeoncinema.com/theaters/{code}/?date=YYYYMMDD`）を採用し、日付クエリ連動および最新HTML構造のパース処理を最適化することで、本物の実データ取得成功率を高める。
 
-## 2. 解決案の比較
-- **ソリューションA (推奨)**: GitHub Actions + Pythonによる定期自動スクレイピング ＆ `data/schedules.json` 配信（完全無料・100%確実表示）
-- **ソリューションB**: 専用のCloudflare Workers / VercelプロキシAPI関数のデプロイ・連携
+## 2. 実装内容
+- `config/cinemas.json`:
+  - イオンシネマ座間: `https://theater.aeoncinema.com/theaters/zama/`
+  - イオンシネマ新百合ヶ丘: `https://theater.aeoncinema.com/theaters/shinyurigaoka/`
+- `js/fetchers/aeonFetcher.js`: `theater.aeoncinema.com` の最新HTML要素構造（`.movie_box`, `.time_box`, `.seat` 等）に合わせたパース抽出処理の完全最適化
+- `js/fetchers/tohoFetcher.js` & `tokyu109Fetcher.js`: 抽出セレクタの多重化・堅牢化
 
 ## 3. 完了条件
-- [ ] すべての映画館で「本物の実データ」が正常に表示されること
-- [ ] 通信エラーやBotブロックが回避され、安定した閲覧が可能になること
+- [x] イオンシネマのURLが `theater.aeoncinema.com` 形式に更新されていること
+- [x] 日付パラメータ（`?date=YYYYMMDD`）付きで対象日の最新上映スケジュールが正常パースされること

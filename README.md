@@ -31,7 +31,8 @@ cinema-schedule-comparison/
 │   ├── issue-6.md               # [Issue #6] 検証・最終PR準備
 │   ├── issue-7.md               # [Issue #7] 当日を含む7日間の日付選択・切替
 │   ├── issue-8.md               # [Issue #8] 直APIフェッチと切り戻しスイッチ
-│   └── issue-9.md               # [Issue #9] デモ（ダミー）データ明確化表示
+│   ├── issue-9.md               # [Issue #9] デモ（ダミー）データ明確化表示
+│   └── issue-10.md              # [Issue #10] イオンシネマ新URL対応＆パーサー最適化
 ├── prompt/
 │   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/
