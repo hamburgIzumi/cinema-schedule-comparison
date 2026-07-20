@@ -1,44 +1,70 @@
 /**
  * @file app.js
- * @description アプリケーション全体の初期化・リアルタイム動的取得（7日間日付選択対応）・イベントハンドリング統括
+ * @description イオンシネマ比較アプリのメインエントリーポイント (最小構成)
  */
 
-import { ConfigLoader } from './configLoader.js';
-import { TohoFetcher } from './fetchers/tohoFetcher.js';
 import { AeonFetcher } from './fetchers/aeonFetcher.js';
-import { Tokyu109Fetcher } from './fetchers/tokyu109Fetcher.js';
 import { ScheduleUnifier } from './scheduleUnifier.js';
-import { UiRender } from './uiRender.js';
+import { UIRender } from './uiRender.js';
 
 class CinemaApp {
   constructor() {
-    this.configLoader = new ConfigLoader();
-    this.uiRender = new UiRender('matrix-table-container', 'schedule-modal-overlay', 'date-tabs-container');
+    this.cinemasConfig = [];
+    this.fetchers = [];
+    this.scheduleUnifier = new ScheduleUnifier();
+    this.uiRender = new UIRender();
+
+    this.selectedDate = this.getTodayDateString();
     this.unifiedData = null;
-    this.isFetching = false;
-    this.selectedDate = new Date(); // デフォルトは本日
   }
 
-  /**
-   * アプリケーションの初期化
-   */
+  getTodayDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}`;
+  }
+
   async init() {
-    this.setupEventListeners();
-    await this.loadAndRender();
+    try {
+      this.uiRender.renderSkeleton();
+
+      const response = await fetch('./config/cinemas.json');
+      if (!response.ok) {
+        throw new Error('設定ファイル (config/cinemas.json) の読み込みに失敗しました。');
+      }
+
+      this.cinemasConfig = await response.json();
+      this.initializeFetchers();
+      this.setupEventListeners();
+
+      this.uiRender.renderDateSelector(this.selectedDate, (newDate) => {
+        this.selectedDate = newDate;
+        this.loadSchedules();
+      });
+
+      await this.loadSchedules();
+
+    } catch (error) {
+      console.error('アプリ初期化エラー:', error);
+      this.uiRender.renderError('初期化エラー', error.message);
+    }
   }
 
-  /**
-   * イベントリスナーの登録
-   */
+  initializeFetchers() {
+    this.fetchers = this.cinemasConfig.map(config => new AeonFetcher(config));
+  }
+
   setupEventListeners() {
-    // 手動リフレッシュボタン
-    const refreshBtn = document.getElementById('btn-refresh');
+    const refreshBtn = document.getElementById('refresh-btn');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.loadAndRender(true));
+      refreshBtn.addEventListener('click', () => {
+        this.loadSchedules();
+      });
     }
 
-    // 検索入力フィルター
-    const searchInput = document.getElementById('movie-search-input');
+    const searchInput = document.getElementById('search-movie-input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         if (this.unifiedData) {
@@ -46,111 +72,43 @@ class CinemaApp {
         }
       });
     }
-
-    // モーダル閉じるボタン
-    const closeModalBtn = document.getElementById('modal-close-btn');
-    if (closeModalBtn) {
-      closeModalBtn.addEventListener('click', () => this.uiRender.closeModal());
-    }
-
-    // モーダル外側クリックで閉じる
-    const modalOverlay = document.getElementById('schedule-modal-overlay');
-    if (modalOverlay) {
-      modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-          this.uiRender.closeModal();
-        }
-      });
-    }
   }
 
-  /**
-   * 日付変更時の処理
-   * @param {Date} newDate - 選択された新日付
-   */
-  async onDateSelect(newDate) {
-    if (this.isFetching) return;
-    this.selectedDate = newDate;
-    await this.loadAndRender();
-  }
-
-  /**
-   * 映画館データの動的フェッチと描画
-   * @param {boolean} isManual - 手動リフレッシュか否か
-   */
-  async loadAndRender(isManual = false) {
-    if (this.isFetching) return;
-    this.isFetching = true;
-
-    const refreshBtn = document.getElementById('btn-refresh');
-    const refreshIcon = refreshBtn?.querySelector('.refresh-icon');
-    const statusText = document.getElementById('status-update-time');
-
-    if (refreshIcon) refreshIcon.classList.add('spin');
-
-    // 選択日付のフォーマット
-    const month = this.selectedDate.getMonth() + 1;
-    const date = this.selectedDate.getDate();
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    const dayStr = dayNames[this.selectedDate.getDay()];
-    const dateLabel = `${month}月${date}日(${dayStr})`;
-
-    if (statusText) statusText.textContent = `${dateLabel}のデータを取得中 (CORS動的取得)...`;
-
-    // 1. 日付タブのレンダリング
-    this.uiRender.renderDateTabs(this.selectedDate, (newDate) => this.onDateSelect(newDate));
+  async loadSchedules() {
+    this.uiRender.renderSkeleton();
+    const statusText = document.getElementById('status-text');
+    if (statusText) {
+      statusText.textContent = '最新の上映スケジュールを取得中...';
+    }
 
     try {
-      // 2. 映画館設定の読み込み
-      const cinemaConfigs = await this.configLoader.loadConfig();
-
-      // 3. 各映画館の動的フェッチ（選択日付を指定して並列実行）
-      const fetchPromises = cinemaConfigs.map(config => {
-        let fetcher;
-        switch (config.fetcherType) {
-          case 'toho':
-            fetcher = new TohoFetcher(config);
-            break;
-          case 'aeon':
-            fetcher = new AeonFetcher(config);
-            break;
-          case 'tokyu109':
-            fetcher = new Tokyu109Fetcher(config);
-            break;
-          default:
-            fetcher = new AeonFetcher(config);
-        }
-        return fetcher.fetchSchedule(this.selectedDate);
-      });
-
+      const fetchPromises = this.fetchers.map(fetcher => fetcher.fetchSchedule(this.selectedDate));
       const cinemaSchedules = await Promise.all(fetchPromises);
 
-      // 4. MAX方式による作品タイトルユニーク化＆マトリクス構造化
-      this.unifiedData = ScheduleUnifier.unifySchedules(cinemaSchedules, cinemaConfigs);
+      this.unifiedData = this.scheduleUnifier.unify(this.cinemasConfig, cinemaSchedules, this.selectedDate);
 
-      // 5. マトリクス表の描画
-      const searchInput = document.getElementById('movie-search-input');
+      const searchInput = document.getElementById('search-movie-input');
       const filterText = searchInput ? searchInput.value : '';
       this.uiRender.renderMatrixTable(this.unifiedData, filterText);
 
-      // 最終更新表示
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const year = this.selectedDate.substring(0, 4);
+      const month = this.selectedDate.substring(4, 6);
+      const day = this.selectedDate.substring(6, 8);
+      const dateLabel = `${year}年${month}月${day}日`;
+
       if (statusText) {
         statusText.textContent = `表示中: ${dateLabel} | 最終更新: ${timeStr}`;
       }
 
     } catch (error) {
-      console.error('App load error:', error);
-      if (statusText) statusText.textContent = 'データ取得に失敗しました。';
-    } finally {
-      this.isFetching = false;
-      if (refreshIcon) refreshIcon.classList.remove('spin');
+      console.error('スケジュール読み込みエラー:', error);
+      this.uiRender.renderError('データ取得エラー', 'スケジュールの読み込みに失敗しました。');
     }
   }
 }
 
-// 画面読込完了時にアプリ起動
 document.addEventListener('DOMContentLoaded', () => {
   const app = new CinemaApp();
   app.init();

@@ -1,62 +1,26 @@
 [
   {
-    "id": "toho-ebina",
-    "name": "TOHOシネマズ 海老名",
-    "shortName": "TOHO海老名",
-    "brand": "TOHO",
-    "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
-    "apiUrl": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
-    "siteUrl": "https://www.tohotheater.jp/theater/007/",
-    "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
-    "fetcherType": "toho",
-    "theaterCode": "007",
-    "useDirectApi": false,
-    "color": "#e50914",
-    "enabled": true
-  },
-  {
     "id": "aeon-shinyurigaoka",
     "name": "イオンシネマ 新百合ヶ丘",
-    "shortName": "イオン新百合ヶ丘",
-    "brand": "AEON",
-    "url": "https://theater.aeoncinema.com/theaters/shinyurigaoka/",
-    "apiUrl": "https://theater.aeoncinema.com/theaters/shinyurigaoka/",
+    "shortName": "イオン新百合",
+    "brand": "aeon",
+    "code": "shinyurigaoka",
+    "color": "#e60012",
     "siteUrl": "https://theater.aeoncinema.com/theaters/shinyurigaoka/",
+    "corsProxyUrl": "https://api.allorigins.win/raw?url=",
     "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
-    "fetcherType": "aeon",
-    "theaterCode": "shinyurigaoka",
-    "useDirectApi": false,
-    "color": "#800080",
-    "enabled": true
-  },
-  {
-    "id": "109-minamimachida",
-    "name": "109シネマズ 南町田グランベリーパーク",
-    "shortName": "109南町田",
-    "brand": "109",
-    "url": "https://109cinemas.net/grandberrypark/",
-    "apiUrl": "https://109cinemas.net/grandberrypark/",
-    "siteUrl": "https://109cinemas.net/grandberrypark/",
-    "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
-    "fetcherType": "tokyu109",
-    "theaterCode": "grandberrypark",
-    "useDirectApi": false,
-    "color": "#005a9c",
-    "enabled": true
+    "useDirectApi": false
   },
   {
     "id": "aeon-zama",
     "name": "イオンシネマ 座間",
     "shortName": "イオン座間",
-    "brand": "AEON",
-    "url": "https://theater.aeoncinema.com/theaters/zama/",
-    "apiUrl": "https://theater.aeoncinema.com/theaters/zama/",
+    "brand": "aeon",
+    "code": "zama",
+    "color": "#c00010",
     "siteUrl": "https://theater.aeoncinema.com/theaters/zama/",
+    "corsProxyUrl": "https://api.allorigins.win/raw?url=",
     "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
-    "fetcherType": "aeon",
-    "theaterCode": "zama",
-    "useDirectApi": false,
-    "color": "#008080",
-    "enabled": true
+    "useDirectApi": false
   }
 ]
