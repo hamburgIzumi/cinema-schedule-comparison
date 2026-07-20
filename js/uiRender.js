@@ -100,6 +100,10 @@ export class UiRender {
 
     // 映画館列ヘッダー
     cinemas.forEach(cinema => {
+      const demoBadgeHtml = cinema.isFallback 
+        ? `<span class="demo-data-badge" title="通信制限等によりサンプルデータを表示中">⚠️ デモ（ダミー）データ</span>` 
+        : ``;
+
       html += `
         <th>
           <div class="cinema-header-cell">
@@ -109,6 +113,7 @@ export class UiRender {
                 ${cinema.shortName || cinema.name} 🔗
               </a>
             </span>
+            ${demoBadgeHtml}
           </div>
         </th>
       `;
@@ -141,7 +146,7 @@ export class UiRender {
           schedules.forEach(sched => {
             const badgeClass = this.getStatusBadgeClass(sched.status);
             html += `
-              <div class="schedule-item-card" data-cinema="${this.escapeHtml(cinema.name)}" data-movie="${this.escapeHtml(row.title)}" data-time="${this.escapeHtml(sched.time)}" data-screen="${this.escapeHtml(sched.screen)}" data-format="${this.escapeHtml(sched.format)}" data-status="${this.escapeHtml(sched.statusText)}" data-url="${this.escapeHtml(sched.reserveUrl)}">
+              <div class="schedule-item-card" data-cinema="${this.escapeHtml(cinema.name)}" data-isfallback="${cinema.isFallback ? 'true' : 'false'}" data-movie="${this.escapeHtml(row.title)}" data-time="${this.escapeHtml(sched.time)}" data-screen="${this.escapeHtml(sched.screen)}" data-format="${this.escapeHtml(sched.format)}" data-status="${this.escapeHtml(sched.statusText)}" data-url="${this.escapeHtml(sched.reserveUrl)}">
                 <div>
                   <div class="schedule-time">${this.escapeHtml(sched.time)}</div>
                   <span class="schedule-format">${this.escapeHtml(sched.format || '')}</span>
@@ -195,7 +200,8 @@ export class UiRender {
           screen: card.dataset.screen,
           format: card.dataset.format,
           status: card.dataset.status,
-          url: card.dataset.url
+          url: card.dataset.url,
+          isFallback: card.dataset.isfallback === 'true'
         };
         this.openModal(data);
       });
@@ -213,6 +219,23 @@ export class UiRender {
     document.getElementById('modal-time').textContent = data.time;
     document.getElementById('modal-screen').textContent = `${data.screen} (${data.format})`;
     document.getElementById('modal-status').textContent = data.status;
+
+    // デモデータ注記エリア
+    let noticeEl = document.getElementById('modal-demo-notice');
+    if (!noticeEl) {
+      noticeEl = document.createElement('div');
+      noticeEl.id = 'modal-demo-notice';
+      noticeEl.className = 'demo-data-notice';
+      const modalBody = this.modalOverlay.querySelector('.modal-body');
+      if (modalBody) modalBody.appendChild(noticeEl);
+    }
+
+    if (data.isFallback) {
+      noticeEl.style.display = 'block';
+      noticeEl.innerHTML = `⚠️ <strong>【ご注意】</strong> このデータは通信制限等により表示されている接続テスト用サンプル（ダミー）です。最新の実際の状況は「予約サイトヘ進む」ボタンよりご確認ください。`;
+    } else {
+      noticeEl.style.display = 'none';
+    }
     
     const reserveBtn = document.getElementById('modal-reserve-btn');
     if (reserveBtn) {

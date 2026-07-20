@@ -19,3 +19,7 @@ https://github.com/hamburgIzumi/cinema-schedule-comparison.git
 - 変更内容を都度把握し、README.mdに変更が必要な場合は編集を行うこと
 - README.mdはフォルダ構成などファイル説明を記載すること
 - ISSUEはチケット起票を行うこと、起票に際してmdファイル等を作成した際は、ISSUEフォルダに保存すること
+
+ # 追加要件
+- 当日だけでなく複数日確認が可能であること。
+- 

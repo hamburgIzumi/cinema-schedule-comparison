@@ -94,6 +94,7 @@ export class TohoFetcher {
         cinemaId: this.config.id,
         cinemaName: this.config.name,
         targetDate: dateStr,
+        isFallback: false,
         fetchedAt: new Date().toISOString(),
         movies: movies
       };
@@ -167,6 +168,7 @@ export class TohoFetcher {
       cinemaId: this.config.id,
       cinemaName: this.config.name,
       targetDate: dateStr,
+      isFallback: false,
       fetchedAt: new Date().toISOString(),
       movies: movies
     };
@@ -182,6 +184,8 @@ export class TohoFetcher {
     return {
       cinemaId: this.config.id,
       cinemaName: this.config.name,
+      isFallback: true,
+      fallbackReason: "通信遮断またはサイト構造変化のため接続テスト用サンプル（ダミー）データを表示中",
       fetchedAt: new Date().toISOString(),
       movies: [
         {
