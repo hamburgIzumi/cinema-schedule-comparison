@@ -1,13 +1,14 @@
 /**
  * @file index.js (Cloudflare Workers)
- * @description 映画館の最新上映スケジュール・空席状況をリアルタイム動的フェッチしてJSONで返す専用APIプロキシ
+ * @description イオンシネマ専用 公式リアルタイムスケジュールAPIプロキシ
+ * (https://theater.aeoncinema.com/schedule/v2/data/{code}/schedule.json より本物データ抽出)
  */
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // CORSヘッダー定義
+    // CORS許可ヘッダー
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -19,25 +20,11 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const cinemaId = url.searchParams.get('cinema') || 'all';
+    const cinemaId = url.searchParams.get('cinema') || 'aeon-shinyurigaoka';
     const dateStr = url.searchParams.get('date') || getTodayStr();
 
     try {
-      let resultData;
-
-      if (cinemaId.includes('toho')) {
-        resultData = await fetchToho(cinemaId, dateStr);
-      } else if (cinemaId.includes('aeon')) {
-        resultData = await fetchAeon(cinemaId, dateStr);
-      } else if (cinemaId.includes('109')) {
-        resultData = await fetchTokyu109(cinemaId, dateStr);
-      } else {
-        resultData = {
-          status: 'ok',
-          message: 'Cinema Schedule Proxy API is Running!',
-          supportedCinemas: ['toho-ebina', 'aeon-shinyurigaoka', '109-minamimachida', 'aeon-zama']
-        };
-      }
+      const resultData = await fetchAeonOfficialSchedule(cinemaId, dateStr);
 
       return new Response(JSON.stringify(resultData, null, 2), {
         headers: corsHeaders
@@ -47,7 +34,7 @@ export default {
       return new Response(JSON.stringify({
         error: true,
         message: error.message,
-        isFallback: true
+        movies: []
       }), {
         status: 500,
         headers: corsHeaders
@@ -57,197 +44,140 @@ export default {
 };
 
 /**
- * TOHOシネマズ海老名 リアルタイムフェッチ
+ * イオンシネマ公式スケジュールJSONフェッチ (08:20~10:10 等の実時刻取得)
  */
-async function fetchToho(cinemaId, dateStr) {
-  const targetUrl = `https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do?date=${dateStr}`;
-  const response = await fetch(targetUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
-    }
-  });
-
-  const html = await response.text();
-  const movies = parseTohoHtml(html);
-
-  return {
-    cinemaId: cinemaId,
-    cinemaName: "TOHOシネマズ 海老名",
-    targetDate: dateStr,
-    isFallback: movies.length === 0,
-    fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getFallbackMovies(dateStr)
-  };
-}
-
-/**
- * イオンシネマ（新百合ヶ丘・座間） リアルタイムフェッチ
- */
-async function fetchAeon(cinemaId, dateStr) {
+async function fetchAeonOfficialSchedule(cinemaId, dateStr) {
   const code = cinemaId.includes('zama') ? 'zama' : 'shinyurigaoka';
   const cinemaName = cinemaId.includes('zama') ? "イオンシネマ 座間" : "イオンシネマ 新百合ヶ丘";
-  const targetUrl = `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`;
+
+  const v = getTimestampParam();
+  const targetUrl = `https://theater.aeoncinema.com/schedule/v2/data/${code}/schedule.json?v=${v}`;
 
   const response = await fetch(targetUrl, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Referer': `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`
     }
   });
 
-  const html = await response.text();
-  const movies = parseAeonHtml(html, `https://theater.aeoncinema.com/theaters/${code}/`);
+  if (!response.ok) {
+    throw new Error(`イオンシネマ公式APIからの取得に失敗しました (Status: ${response.status})`);
+  }
+
+  const json = await response.json();
+  const movies = parseAeonScheduleJson(json, dateStr, `https://theater.aeoncinema.com/theaters/${code}/?date=${dateStr}`);
 
   return {
     cinemaId: cinemaId,
     cinemaName: cinemaName,
     targetDate: dateStr,
-    isFallback: movies.length === 0,
     fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getFallbackMovies(dateStr)
+    movies: movies
   };
 }
 
 /**
- * 109シネマズ南町田 リアルタイムフェッチ
+ * イオンシネマ公式 JSON パーサー
  */
-async function fetchTokyu109(cinemaId, dateStr) {
-  const targetUrl = `https://109cinemas.net/grandberrypark/?date=${dateStr}`;
-  const response = await fetch(targetUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
-    }
-  });
+function parseAeonScheduleJson(json, dateStr, reserveUrl) {
+  const moviesMap = new Map();
+  const dateData = json[dateStr];
 
-  const html = await response.text();
-  const movies = parse109Html(html);
+  if (!dateData) return [];
 
-  return {
-    cinemaId: cinemaId,
-    cinemaName: "109シネマズ 南町田グランベリーパーク",
-    targetDate: dateStr,
-    isFallback: movies.length === 0,
-    fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getFallbackMovies(dateStr)
-  };
-}
+  // 各映画グループ ID をループ処理
+  for (const groupKey in dateData) {
+    const slots = dateData[groupKey];
+    if (!Array.isArray(slots)) continue;
 
-// パース補助関数群 (正規表現/簡易HTMLスプリッター)
-function parseTohoHtml(html) {
-  const movies = [];
-  const movieBlocks = html.split(/class="[^"]*schedule-block[^"]*"/i);
-  
-  movieBlocks.forEach((block, idx) => {
-    if (idx === 0) return;
-    const titleMatch = block.match(/<h[234][^>]*>(.*?)<\/h[234]>/s) || block.match(/class="[^"]*movie-title[^"]*"[^>]*>(.*?)<\//s);
-    if (!titleMatch) return;
-    const title = cleanText(titleMatch[1]);
+    for (const slot of slots) {
+      if (!slot.name || !slot.name.ja) continue;
 
-    const schedules = [];
-    const timeMatches = block.matchAll(/<li[^>]*class="[^"]*time-table-item[^"]*"[^>]*>(.*?)<\/li>/gs);
-    for (const tm of timeMatches) {
-      const content = tm[1];
-      const timeMatch = content.match(/(\d{2}:\d{2})/);
-      if (timeMatch) {
-        const time = timeMatch[1];
-        const status = content.includes('◎') ? '◎' : (content.includes('△') ? '△' : (content.includes('×') ? '×' : '◯'));
-        schedules.push({
-          time: `${time} -`,
-          startTime: time,
-          screen: 'SCREEN 1',
-          format: '2D',
-          status: status,
-          statusText: '予約可能',
-          reserveUrl: 'https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do'
+      // 作品名の整形 (例: "吹替　君と花火と約束と" -> "君と花火と約束と")
+      let rawTitle = slot.name.ja
+        .replace(/^(?:字幕|吹替|IMAX|4DX|3D|2D|ULTIRA|［字幕］|［吹替］|【字幕】|【吹替】)\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!rawTitle) continue;
+
+      // 日本時間 (JST: UTC+9) への変換
+      const startUtc = new Date(slot.startDate);
+      const endUtc = new Date(slot.endDate);
+
+      const startJst = new Date(startUtc.getTime() + 9 * 60 * 60 * 1000);
+      const endJst = new Date(endUtc.getTime() + 9 * 60 * 60 * 1000);
+
+      const startTimeStr = formatTime(startJst);
+      const endTimeStr = formatTime(endJst);
+      const fullTimeStr = `${startTimeStr} - ${endTimeStr}`;
+
+      // 残席数・空席ステータスの計算
+      const totalCap = slot.maximumAttendeeCapacity || 100;
+      const remainCap = slot.remainingAttendeeCapacity || 0;
+      const ratio = remainCap / totalCap;
+
+      let status = '◯';
+      let statusText = '予約可能';
+
+      if (remainCap === 0) {
+        status = '×';
+        statusText = '満席';
+      } else if (ratio > 0.5) {
+        status = '◎';
+        statusText = '余裕あり';
+      } else if (ratio <= 0.2) {
+        status = '△';
+        statusText = '残りわずか';
+      }
+
+      // スクリーン名
+      const screenName = (slot.location && slot.location.name && slot.location.name.ja)
+        ? slot.location.name.ja
+        : 'スクリーン';
+
+      // フォーマット判定
+      let format = '2D';
+      if (slot.name.ja.includes('3D')) format = '3D';
+      else if (slot.name.ja.includes('字幕')) format = '2D / 字幕';
+      else if (slot.name.ja.includes('吹替')) format = '2D / 吹替';
+
+      const scheduleObj = {
+        time: fullTimeStr,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+        screen: screenName,
+        format: format,
+        status: status,
+        statusText: statusText,
+        reserveUrl: reserveUrl
+      };
+
+      if (!moviesMap.has(rawTitle)) {
+        moviesMap.set(rawTitle, {
+          title: rawTitle,
+          schedules: []
         });
       }
+
+      moviesMap.get(rawTitle).schedules.push(scheduleObj);
     }
-    if (title && schedules.length > 0) {
-      movies.push({ title, schedules });
-    }
+  }
+
+  // 時間順にソート
+  const resultMovies = Array.from(moviesMap.values());
+  resultMovies.forEach(m => {
+    m.schedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
   });
 
-  return movies;
+  return resultMovies;
 }
 
-function parseAeonHtml(html, baseUrl) {
-  const movies = [];
-  const movieBlocks = html.split(/class="[^"]*movie_box[^"]*"/i);
-
-  movieBlocks.forEach((block, idx) => {
-    if (idx === 0) return;
-    const titleMatch = block.match(/class="[^"]*movie_title[^"]*"[^>]*>(.*?)<\//s) || block.match(/<h[234][^>]*>(.*?)<\/h[234]>/s);
-    if (!titleMatch) return;
-    const title = cleanText(titleMatch[1]);
-
-    const schedules = [];
-    const timeMatches = block.matchAll(/<div[^>]*class="[^"]*time_box[^"]*"[^>]*>(.*?)<\/div>/gs);
-    for (const tm of timeMatches) {
-      const content = tm[1];
-      const timeMatch = content.match(/(\d{2}:\d{2})/);
-      if (timeMatch) {
-        const time = timeMatch[1];
-        const status = content.includes('◎') ? '◎' : (content.includes('△') ? '△' : (content.includes('×') ? '×' : '◯'));
-        schedules.push({
-          time: `${time} -`,
-          startTime: time,
-          screen: 'スクリーン 1',
-          format: '2D',
-          status: status,
-          statusText: '予約可能',
-          reserveUrl: baseUrl
-        });
-      }
-    }
-    if (title && schedules.length > 0) {
-      movies.push({ title, schedules });
-    }
-  });
-
-  return movies;
-}
-
-function parse109Html(html) {
-  const movies = [];
-  const movieBlocks = html.split(/class="[^"]*schedule_movie[^"]*"/i);
-
-  movieBlocks.forEach((block, idx) => {
-    if (idx === 0) return;
-    const titleMatch = block.match(/class="[^"]*title[^"]*"[^>]*>(.*?)<\//s) || block.match(/<h[234][^>]*>(.*?)<\/h[234]>/s);
-    if (!titleMatch) return;
-    const title = cleanText(titleMatch[1]);
-
-    const schedules = [];
-    const timeMatches = block.matchAll(/<div[^>]*class="[^"]*time_item[^"]*"[^>]*>(.*?)<\/div>/gs);
-    for (const tm of timeMatches) {
-      const content = tm[1];
-      const timeMatch = content.match(/(\d{2}:\d{2})/);
-      if (timeMatch) {
-        const time = timeMatch[1];
-        const status = content.includes('◎') ? '◎' : (content.includes('△') ? '△' : (content.includes('×') ? '×' : '◯'));
-        schedules.push({
-          time: `${time} -`,
-          startTime: time,
-          screen: 'シアター 1',
-          format: '2D',
-          status: status,
-          statusText: '購入可能',
-          reserveUrl: 'https://109cinemas.net/grandberrypark/'
-        });
-      }
-    }
-    if (title && schedules.length > 0) {
-      movies.push({ title, schedules });
-    }
-  });
-
-  return movies;
-}
-
-function cleanText(text) {
-  return text ? text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : '';
+function formatTime(dateObj) {
+  const hh = String(dateObj.getUTCHours()).padStart(2, '0');
+  const mm = String(dateObj.getUTCMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
 }
 
 function getTodayStr() {
@@ -258,15 +188,12 @@ function getTodayStr() {
   return `${yyyy}${mm}${dd}`;
 }
 
-function getFallbackMovies(dateStr) {
-  return [
-    {
-      title: "名探偵コナン 100万ドルの五稜星",
-      schedules: [
-        { time: "09:00 - 11:05", startTime: "09:00", screen: "SCREEN 1", format: "2D", status: "◎", statusText: "空席あり", reserveUrl: "#" },
-        { time: "11:40 - 13:45", startTime: "11:40", screen: "SCREEN 1", format: "2D", status: "◯", statusText: "予約可能", reserveUrl: "#" },
-        { time: "14:20 - 16:25", startTime: "14:20", screen: "SCREEN 1", format: "IMAX 2D", status: "△", statusText: "残りわずか", reserveUrl: "#" }
-      ]
-    }
-  ];
+function getTimestampParam() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}${hh}${min}`;
 }

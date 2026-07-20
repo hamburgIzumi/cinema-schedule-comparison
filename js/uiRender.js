@@ -100,10 +100,6 @@ export class UiRender {
 
     // 映画館列ヘッダー
     cinemas.forEach(cinema => {
-      const demoBadgeHtml = cinema.isFallback 
-        ? `<span class="demo-data-badge" title="通信制限等によりサンプルデータを表示中">⚠️ デモ（ダミー）データ</span>` 
-        : ``;
-
       html += `
         <th>
           <div class="cinema-header-cell">
@@ -113,7 +109,6 @@ export class UiRender {
                 ${cinema.shortName || cinema.name} 🔗
               </a>
             </span>
-            ${demoBadgeHtml}
           </div>
         </th>
       `;

@@ -50,3 +50,15 @@
 11. **[Issue #11] Cloudflare Workers によるリアルタイムプロキシAPI構築と連携**
    - 詳細チケット: [ISSUE/issue-11.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-11.md)
    - ステータス: 完了 (Completed)
+
+12. **[Issue #12] Cloudflare Workers 内部パースロジックの精密化とデバッグ**
+   - 詳細チケット: [ISSUE/issue-12.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-12.md)
+   - ステータス: 完了 (Completed)
+
+13. **[Issue #13] ダミーデータ生成およびダミー警告表示の完全撤去**
+   - 詳細チケット: [ISSUE/issue-13.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-13.md)
+   - ステータス: 完了 (Completed)
+
+14. **[Issue #14] 最小構成化：イオンシネマ単独化と他館実装の全撤去**
+   - 詳細チケット: [ISSUE/issue-14.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-14.md)
+   - ステータス: 完了 (Completed)
