@@ -25,10 +25,18 @@ export class CorsProxyService {
 
     try {
       const targetUrl = `${workersApiUrl.replace(/\/$/, '')}/?cinema=${encodeURIComponent(cinemaId)}&date=${encodeURIComponent(dateStr)}`;
+      
+      // 8秒のタイムアウトシグナル
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       const response = await fetch(targetUrl, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -37,7 +45,7 @@ export class CorsProxyService {
         }
       }
     } catch (e) {
-      console.warn(`Cloudflare Workers API fetch failed for ${cinemaId}:`, e);
+      console.warn(`Cloudflare Workers API fetch failed or timed out for ${cinemaId}:`, e);
     }
     return null;
   }

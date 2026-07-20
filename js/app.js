@@ -97,7 +97,20 @@ class CinemaApp {
 
     try {
       const fetchPromises = this.fetchers.map(fetcher => fetcher.fetchSchedule(this.selectedDate));
-      const cinemaSchedules = await Promise.all(fetchPromises);
+      const results = await Promise.allSettled(fetchPromises);
+      const cinemaSchedules = results.map((res, index) => {
+        if (res.status === 'fulfilled' && res.value) {
+          return res.value;
+        }
+        const config = this.cinemasConfig[index];
+        return {
+          cinemaId: config.id,
+          cinemaName: config.name,
+          targetDate: this.selectedDate,
+          fetchedAt: new Date().toISOString(),
+          movies: []
+        };
+      });
 
       this.unifiedData = this.scheduleUnifier.unify(this.cinemasConfig, cinemaSchedules, this.selectedDate);
 
