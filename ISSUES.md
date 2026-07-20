@@ -66,3 +66,7 @@
 15. **[Issue #15] ゼブラ縞表示および列境界線の視覚的強化**
    - 詳細チケット: [ISSUE/issue-15.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-15.md)
    - ステータス: 完了 (Completed)
+
+16. **[Issue #16] 劇場名ヘッダーのスクロール固定表示およびモバイル・レスポンシブ対応**
+   - 詳細チケット: [ISSUE/issue-16.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-16.md)
+   - ステータス: 完了 (Completed)
