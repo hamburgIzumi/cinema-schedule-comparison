@@ -106,12 +106,15 @@ cinema-schedule-comparison/
 
 1. **Cloudflare アカウントの準備**:
    - [Cloudflare 公式サイト](https://dash.cloudflare.com/) で無料アカウントを作成・ログインします。
-2. **Workers の作成**:
-   - ダッシュボードの左メニュー「Workers & Pages」 > **「Workerを作成」** をクリック。
-   - Worker名（例: `cinema-schedule-proxy`）を設定して作成します。
-3. **コードの貼り付け**:
-   - **「コードを編集」** ボタンを押し、リポジトリ内の [workers/index.js](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/workers/index.js) の内容をそのまま全コピペして上書きし、**「保存してデプロイ」** をクリックします。
-4. **設定ファイルへの反映**:
+2. **「Worker を作成」画面の操作**:
+   - ダッシュボードの「Workers & Pages」 > **「Workerを作成」** をクリック。
+   - 画面中央のボタン一覧から **`🌐 Hello World を開始する`** をクリックします。
+3. **Worker の保存 ＆ コードの編集**:
+   - そのまま **「デプロイ」** （またはWorkerを保存）をクリックします。
+   - デプロイ完了後の画面で **「コードを編集」** （または Edit code）ボタンをクリックします。
+4. **コードの貼り付け**:
+   - 開いたエディタ画面のコードをすべて削除し、リポジトリ内の [workers/index.js](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/workers/index.js) の内容を全コピペして貼り付け、右上の **「デプロイ」** ボタンを押します。
+5. **設定ファイルへの反映**:
    - 発行された Worker のURL（例: `https://cinema-schedule-proxy.xxxx.workers.dev`）をコピーします。
    - `config/cinemas.json` 内の `"workersApiUrl"` にそのURLを貼り付けます：
      ```json
