@@ -51,8 +51,14 @@ export class TohoFetcher {
     try {
       return await this.fetchScheduleFromHtml(targetDate);
     } catch (error) {
-      console.warn(`TOHO HTML fetch error for ${this.config.name}, using dynamic fallback:`, error);
-      return this.getRealtimeFallbackData(targetDate);
+      console.warn(`TOHO HTML fetch error for ${this.config.name}:`, error);
+      return {
+        cinemaId: this.config.id,
+        cinemaName: this.config.name,
+        targetDate: dateStr,
+        fetchedAt: new Date().toISOString(),
+        movies: []
+      };
     }
   }
 

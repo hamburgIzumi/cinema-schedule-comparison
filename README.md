@@ -34,7 +34,8 @@ cinema-schedule-comparison/
 │   ├── issue-9.md               # [Issue #9] デモ（ダミー）データ明確化表示
 │   ├── issue-10.md              # [Issue #10] イオンシネマ新URL対応＆パーサー最適化
 │   ├── issue-11.md              # [Issue #11] Cloudflare Workers リアルタイムAPI構築
-│   └── issue-12.md              # [Issue #12] Workers パース精密化＆マルチパターン抽出
+│   ├── issue-12.md              # [Issue #12] Workers パース精密化＆マルチパターン抽出
+│   └── issue-13.md              # [Issue #13] ダミーデータ生成・ダミー警告の完全撤去
 ├── prompt/
 │   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/

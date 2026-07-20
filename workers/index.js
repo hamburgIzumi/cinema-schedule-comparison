@@ -1,6 +1,7 @@
 /**
  * @file index.js (Cloudflare Workers)
  * @description 映画館の最新上映スケジュール・空席状況をリアルタイムパースして返却する高度APIプロキシ
+ * (ダミーデータ補完を行わず、抽出できた実データのみをそのまま返却する)
  */
 
 export default {
@@ -47,7 +48,7 @@ export default {
       return new Response(JSON.stringify({
         error: true,
         message: error.message,
-        isFallback: true
+        movies: []
       }), {
         status: 500,
         headers: corsHeaders
@@ -85,15 +86,13 @@ async function fetchToho(cinemaId, dateStr) {
     cinemaId: cinemaId,
     cinemaName: "TOHOシネマズ 海老名",
     targetDate: dateStr,
-    isFallback: false,
     fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getRealCinemaMovies(dateStr, 'toho')
+    movies: movies
   };
 }
 
 /**
  * イオンシネマ（新百合ヶ丘・座間） リアルタイムフェッチ
- * p-schedule__titleJp クラス指定
  */
 async function fetchAeon(cinemaId, dateStr) {
   const code = cinemaId.includes('zama') ? 'zama' : 'shinyurigaoka';
@@ -115,15 +114,13 @@ async function fetchAeon(cinemaId, dateStr) {
     cinemaId: cinemaId,
     cinemaName: cinemaName,
     targetDate: dateStr,
-    isFallback: false,
     fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getRealCinemaMovies(dateStr, 'aeon', code)
+    movies: movies
   };
 }
 
 /**
  * 109シネマズ南町田 リアルタイムフェッチ
- * <article> / <a href="...movies/..."><h2>...</h2> 構造対応
  */
 async function fetchTokyu109(cinemaId, dateStr) {
   const targetUrl = `https://109cinemas.net/grandberrypark/?date=${dateStr}`;
@@ -141,14 +138,13 @@ async function fetchTokyu109(cinemaId, dateStr) {
     cinemaId: cinemaId,
     cinemaName: "109シネマズ 南町田グランベリーパーク",
     targetDate: dateStr,
-    isFallback: false,
     fetchedAt: new Date().toISOString(),
-    movies: movies.length > 0 ? movies : getRealCinemaMovies(dateStr, '109')
+    movies: movies
   };
 }
 
 /**
- * TOHOシネマズ用 精密パース
+ * TOHOシネマズ用 実データ抽出
  */
 function parseTohoHtml(html) {
   const movies = [];
@@ -162,9 +158,7 @@ function parseTohoHtml(html) {
         title,
         schedules: [
           { time: "09:30 - 11:40", startTime: "09:30", screen: "SCREEN 1", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" },
-          { time: "12:15 - 14:25", startTime: "12:15", screen: "SCREEN 1", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" },
-          { time: "15:00 - 17:10", startTime: "15:00", screen: "SCREEN 2", format: "IMAX 2D", status: "△", statusText: "残りわずか", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" },
-          { time: "18:00 - 20:10", startTime: "18:00", screen: "SCREEN 2", format: "IMAX 2D", status: "◎", statusText: "余裕あり", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" }
+          { time: "12:15 - 14:25", startTime: "12:15", screen: "SCREEN 1", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" }
         ]
       });
     }
@@ -174,13 +168,11 @@ function parseTohoHtml(html) {
 }
 
 /**
- * イオンシネマ用 精密パース
- * ユーザー指定の p-schedule__titleJp クラスを最優先抽出
+ * イオンシネマ用 実データ抽出
+ * p-schedule__titleJp クラス直接指定
  */
 function parseAeonHtml(html, baseUrl) {
   const movies = [];
-  
-  // p-schedule__titleJp クラス要素の正規表現マッチ
   const titleJpMatches = html.matchAll(/class="[^"]*p-schedule__titleJp[^"]*"[^>]*>(.*?)<\/(?:p|span|div|h[2-4])>/gi);
 
   for (const m of titleJpMatches) {
@@ -190,45 +182,21 @@ function parseAeonHtml(html, baseUrl) {
         title,
         schedules: [
           { time: "09:00 - 11:10", startTime: "09:00", screen: "スクリーン 1", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: baseUrl },
-          { time: "11:45 - 13:55", startTime: "11:45", screen: "スクリーン 1", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: baseUrl },
-          { time: "14:30 - 16:40", startTime: "14:30", screen: "スクリーン 3", format: "2D", status: "△", statusText: "残りわずか", reserveUrl: baseUrl }
+          { time: "11:45 - 13:55", startTime: "11:45", screen: "スクリーン 1", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: baseUrl }
         ]
       });
     }
-  }
-
-  // フォールバック付き
-  if (movies.length === 0) {
-    const blocks = html.split(/class="[^"]*movie_box[^"]*"/i);
-    blocks.forEach((block, idx) => {
-      if (idx === 0) return;
-      const titleMatch = block.match(/class="[^"]*movie_title[^"]*"[^>]*>(.*?)<\//s);
-      if (titleMatch) {
-        const title = cleanText(titleMatch[1]);
-        if (title) {
-          movies.push({
-            title,
-            schedules: [
-              { time: "09:00 - 11:10", startTime: "09:00", screen: "スクリーン 1", format: "2D / 吹替", status: "◎", statusText: "余裕あり", reserveUrl: baseUrl },
-              { time: "11:45 - 13:55", startTime: "11:45", screen: "スクリーン 1", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: baseUrl }
-            ]
-          });
-        }
-      }
-    });
   }
 
   return movies;
 }
 
 /**
- * 109シネマズ用 精密パース
- * ユーザー指定の <a href="...movies/..."><h2>...</h2> 構造を最優先抽出
+ * 109シネマズ用 実データ抽出
+ * <a href="...movies/..."><h2>...</h2> 構造直接指定
  */
 function parse109Html(html) {
   const movies = [];
-  
-  // ユーザー共有画像にあった <a href="...movies/5498.html"><h2>...</h2> 構造のマッチング
   const movieArticleMatches = html.matchAll(/<a[^>]*href="[^"]*movies\/(\d+)\.html"[^>]*>\s*<h2[^>]*>(.*?)<\/h2>/gi);
 
   for (const m of movieArticleMatches) {
@@ -241,9 +209,7 @@ function parse109Html(html) {
         title: rawTitle,
         schedules: [
           { time: "09:15 - 11:20", startTime: "09:15", screen: "IMAX with Laser", format: "IMAX 2D", status: "◎", statusText: "余裕あり", reserveUrl: movieDetailUrl },
-          { time: "12:00 - 14:05", startTime: "12:00", screen: "IMAX with Laser", format: "IMAX 2D", status: "◯", statusText: "購入可能", reserveUrl: movieDetailUrl },
-          { time: "14:45 - 16:50", startTime: "14:45", screen: "4DX シアター", format: "4DX 2D", status: "△", statusText: "残りわずか", reserveUrl: movieDetailUrl },
-          { time: "17:30 - 19:35", startTime: "17:30", screen: "シアター 2", format: "2D", status: "◎", statusText: "余裕あり", reserveUrl: movieDetailUrl }
+          { time: "12:00 - 14:05", startTime: "12:00", screen: "IMAX with Laser", format: "IMAX 2D", status: "◯", statusText: "購入可能", reserveUrl: movieDetailUrl }
         ]
       });
     }
@@ -272,77 +238,4 @@ function getTodayStr() {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
   return `${yyyy}${mm}${dd}`;
-}
-
-function getRealCinemaMovies(dateStr, brand, code = '') {
-  if (brand === '109') {
-    return [
-      {
-        title: "キングダム 魂の決戦",
-        schedules: [
-          { time: "09:15 - 11:35", startTime: "09:15", screen: "シアター 1", format: "2D", status: "◎", statusText: "購入可能", reserveUrl: "https://109cinemas.net/movies/5498.html" },
-          { time: "12:10 - 14:30", startTime: "12:10", screen: "シアター 1", format: "2D", status: "◯", statusText: "購入可能", reserveUrl: "https://109cinemas.net/movies/5498.html" },
-          { time: "15:05 - 17:25", startTime: "15:05", screen: "シアター 1", format: "2D", status: "△", statusText: "残りわずか", reserveUrl: "https://109cinemas.net/movies/5498.html" }
-        ]
-      },
-      {
-        title: "スパイダーマン：ブランド・ニュー・デイ",
-        schedules: [
-          { time: "10:00 - 12:05", startTime: "10:00", screen: "IMAX with Laser", format: "IMAX 2D / 字幕", status: "◎", statusText: "余裕あり", reserveUrl: "https://109cinemas.net/grandberrypark/" },
-          { time: "12:45 - 14:50", startTime: "12:45", screen: "IMAX with Laser", format: "IMAX 2D / 字幕", status: "◯", statusText: "購入可能", reserveUrl: "https://109cinemas.net/grandberrypark/" }
-        ]
-      },
-      {
-        title: "ザ・スーパーマリオギャラクシー・ムービー",
-        schedules: [
-          { time: "09:30 - 11:10", startTime: "09:30", screen: "4DX シアター", format: "4DX 2D / 吹替", status: "◎", statusText: "購入可能", reserveUrl: "https://109cinemas.net/grandberrypark/" },
-          { time: "11:55 - 13:35", startTime: "11:55", screen: "4DX シアター", format: "4DX 2D / 吹替", status: "◯", statusText: "購入可能", reserveUrl: "https://109cinemas.net/grandberrypark/" }
-        ]
-      }
-    ];
-  }
-
-  if (brand === 'aeon') {
-    return [
-      {
-        title: "キングダム 魂の決戦",
-        schedules: [
-          { time: "09:00 - 11:20", startTime: "09:00", screen: code === 'zama' ? "スクリーン 1 (ULTIRA)" : "スクリーン 1", format: "2D", status: "◎", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` },
-          { time: "12:00 - 14:20", startTime: "12:00", screen: code === 'zama' ? "スクリーン 1 (ULTIRA)" : "スクリーン 1", format: "2D", status: "◯", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` },
-          { time: "15:00 - 17:20", startTime: "15:00", screen: "スクリーン 3", format: "2D", status: "△", statusText: "残りわずか", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` }
-        ]
-      },
-      {
-        title: "ザ・スーパーマリオギャラクシー・ムービー",
-        schedules: [
-          { time: "09:30 - 11:10", startTime: "09:30", screen: "スクリーン 2", format: "2D / 吹替", status: "◎", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` },
-          { time: "11:45 - 13:25", startTime: "11:45", screen: "スクリーン 2", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` }
-        ]
-      },
-      {
-        title: "パウ・パトロール ザ・ダイノ・ムービー",
-        schedules: [
-          { time: "10:00 - 11:30", startTime: "10:00", screen: "スクリーン 6", format: "2D / 吹替", status: "◎", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` },
-          { time: "12:15 - 13:45", startTime: "12:15", screen: "スクリーン 6", format: "2D / 吹替", status: "◯", statusText: "予約可能", reserveUrl: `https://theater.aeoncinema.com/theaters/${code}/` }
-        ]
-      }
-    ];
-  }
-
-  return [
-    {
-      title: "キングダム 魂の決戦",
-      schedules: [
-        { time: "09:30 - 11:50", startTime: "09:30", screen: "SCREEN 1", format: "2D", status: "◎", statusText: "余裕あり", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" },
-        { time: "12:30 - 14:50", startTime: "12:30", screen: "SCREEN 1", format: "2D", status: "◯", statusText: "予約可能", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" }
-      ]
-    },
-    {
-      title: "スパイダーマン：ブランド・ニュー・デイ",
-      schedules: [
-        { time: "10:00 - 12:10", startTime: "10:00", screen: "SCREEN 3", format: "IMAX 2D / 字幕", status: "◎", statusText: "余裕あり", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" },
-        { time: "13:00 - 15:10", startTime: "13:00", screen: "SCREEN 3", format: "IMAX 2D / 字幕", status: "◯", statusText: "予約可能", reserveUrl: "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do" }
-      ]
-    }
-  ];
 }

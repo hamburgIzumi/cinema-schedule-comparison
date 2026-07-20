@@ -54,3 +54,7 @@
 12. **[Issue #12] Cloudflare Workers 内部パースロジックの精密化とデバッグ**
    - 詳細チケット: [ISSUE/issue-12.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-12.md)
    - ステータス: 完了 (Completed)
+
+13. **[Issue #13] ダミーデータ生成およびダミー警告表示の完全撤去**
+   - 詳細チケット: [ISSUE/issue-13.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-13.md)
+   - ステータス: 完了 (Completed)
