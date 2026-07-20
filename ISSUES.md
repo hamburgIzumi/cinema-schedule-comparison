@@ -1,62 +1,32 @@
-# プロジェクト Issues 管理
+# プロジェクト Issues 一覧
 
-本ドキュメントは `/Users/sizumi/toybox/RULES.md` に基づき、プロジェクトマネージャー（役割A）が定義した全Issue一覧です。
-
----
-
-## [Issue #1] プロジェクトの基本構造、Gitブランチ構成（work）、およびREADME.mdの整備
-- **目的**: 開発の主軸となる `work` ブランチを作成し、プロジェクトのフォルダ構造およびドキュメント管理の基盤を構築する。
-- **実装内容**:
-  - `work` ブランチの作成。
-  - `ISSUES.md` の作成。
-  - `README.md` の初回作成（概要、フォルダ構成図、ファイル説明）。
-- **完了条件**: `work` ブランチに全初期ドキュメントがコミットされていること。
+本ドキュメントは `/Users/sizumi/toybox/RULES.md` に基づき、プロジェクトマネージャー（役割A）が管理する全Issueの一覧です。
+各Issueの詳細は `ISSUE/` フォルダ配下の個別チケットMarkdownファイルを参照してください。
 
 ---
 
-## [Issue #2] 設定ファイル (cinemas.json) の定義と動的ロードモジュールの作成
-- **目的**: 比較対象映画館（TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズ南町田、イオンシネマ座間）の設定を変更可能にする。
-- **実装内容**:
-  - `config/cinemas.json` の作成。
-  - `js/configLoader.js` の実装。
-- **完了条件**: 設定ファイルから映画館情報を正常に読み込め、追加・変更に柔軟に対応できること。
+## Issue一覧
 
----
+1. **[Issue #1] プロジェクトの基本構造、Gitブランチ構成（work）、およびREADME.mdの整備**
+   - 詳細チケット: [ISSUE/issue-1.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-1.md)
+   - ステータス: 完了 (Completed)
 
-## [Issue #3] CORSプロキシ経由の映画館データ動的取得モジュール (TOHO/イオン/109シネマズ) の実装
-- **目的**: ブラウザのCORS制限を回避し、最新の映画館スケジュールおよび空席情報をリアルタイムに動的取得・パースする。
-- **実装内容**:
-  - `js/fetchers/corsProxy.js`（CORSプロキシ通信機能）の実装。
-  - `js/fetchers/tohoFetcher.js`（TOHOシネマズ用スクレイピング）の実装。
-  - `js/fetchers/aeonFetcher.js`（イオンシネマ用スクレイピング）の実装。
-  - `js/fetchers/tokyu109Fetcher.js`（109シネマズ用スクレイピング）の実装。
-- **完了条件**: 各対象映画館の最新上映スケジュール・空席情報が動的に取得・構造化データへ変換できること。
+2. **[Issue #2] 設定ファイル (cinemas.json) の定義と動的ロードモジュールの作成**
+   - 詳細チケット: [ISSUE/issue-2.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-2.md)
+   - ステータス: 完了 (Completed)
 
----
+3. **[Issue #3] CORSプロキシ経由の映画館データ動的取得モジュール (TOHO/イオン/109シネマズ) の実装**
+   - 詳細チケット: [ISSUE/issue-3.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-3.md)
+   - ステータス: 完了 (Completed)
 
-## [Issue #4] MAX方式による全映画館作品ユニーク化＆マトリクス構造の構築
-- **目的**: 対象映画館から取得した全作品を「MAX方式」で網羅・ユニーク化し、比較用マトリクスデータを生成する。
-- **実装内容**:
-  - `js/scheduleUnifier.js` の実装。
-  - 作品名の表記揺れ調整・ユニーク化および作品×映画館のマトリクス構成。
-- **完了条件**: 重複のない作品一覧が行となり、各映画館の上映枠が紐づいた構造データが作成されること。
+4. **[Issue #4] MAX方式による全映画館作品ユニーク化＆マトリクス構造の構築**
+   - 詳細チケット: [ISSUE/issue-4.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-4.md)
+   - ステータス: 完了 (Completed)
 
----
+5. **[Issue #5] スタイリッシュなダークテーマ UI/UX とレスポンシブ比較表・モーダルの実装**
+   - 詳細チケット: [ISSUE/issue-5.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-5.md)
+   - ステータス: 進行中 (In Progress)
 
-## [Issue #5] スタイリッシュなダークテーマ UI/UX とレスポンシブマトリクス表・空席モーダルの実装
-- **目的**: ユーザーが直感的にスケジュールと空席状況を比較できるモダンなWeb画面を構築する。
-- **実装内容**:
-  - `css/main.css` & `css/components.css` によるデザインシステム・ガラスモルフィズム適用。
-  - `index.html` の作成。
-  - `js/uiRender.js` & `js/app.js` による動的描画、手動更新、空席詳細モーダル機能の実装。
-- **完了条件**: ブラウザ上で美しいマトリクス表が表示され、空席確認や予約リンクへの遷移がスムーズに行えること。
-
----
-
-## [Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備
-- **目的**: 全機能の統合テストを行い、GitHub Pages公開およびマージに向けた準備を整える。
-- **実装内容**:
-  - 最終動作検証およびレスポンシブデザイン確認。
-  - `README.md` の最終更新（完成したフォルダ構造と全ファイル機能の記載）。
-  - `work` ブランチから `main` ブランチへのプルリクエスト（PR）の作成（保留状態）。
-- **完了条件**: 全要件が満たされ、`README.md` が整備され、`work` -> `main` PRが作成されていること。
+6. **[Issue #6] 動作検証・README.md最終更新、および work -> main への最終PR準備**
+   - 詳細チケット: [ISSUE/issue-6.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-6.md)
+   - ステータス: 未着手 (Open)

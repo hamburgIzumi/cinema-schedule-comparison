@@ -20,7 +20,14 @@
 ```
 cinema-schedule-comparison/
 ├── README.md                    # プロジェクト概要・使い方・構成ドキュメント
-├── ISSUES.md                    # Issue管理ドキュメント（RULES.md準拠）
+├── ISSUES.md                    # Issue管理インデックスドキュメント
+├── ISSUE/                       # 個別Issueチケット管理フォルダ
+│   ├── issue-1.md               # [Issue #1] 基本構造・ブランチ構築
+│   ├── issue-2.md               # [Issue #2] 設定ファイル cinemas.json
+│   ├── issue-3.md               # [Issue #3] CORSプロキシ動的フェッチャー
+│   ├── issue-4.md               # [Issue #4] MAX方式作品統合
+│   ├── issue-5.md               # [Issue #5] UI/UX・マトリクス表
+│   └── issue-6.md               # [Issue #6] 検証・最終PR準備
 ├── prompt/
 │   └── prompt.md                # ユーザー要件定義ファイル
 ├── config/
@@ -45,7 +52,8 @@ cinema-schedule-comparison/
 | ファイル / フォルダ | ステータス | 説明 |
 | :--- | :--- | :--- |
 | `README.md` | 作成済 | プロジェクトの概要、ディレクトリ構成、各ファイルの説明、利用手順を記載するメインドキュメント。 |
-| `ISSUES.md` | 作成済 | `/Users/sizumi/toybox/RULES.md` に基づきプロジェクトマネージャーが管理する全Issue一覧。 |
+| `ISSUES.md` | 作成済 | 全Issueの起票状況および概要をまとめたインデックスドキュメント。 |
+| `ISSUE/` | **[NEW] 作成済** | 個別Issueの目的・実装内容・完了条件を管理するMarkdownチケット格納フォルダ。 |
 | `config/cinemas.json` | **[Issue #2] 作成済** | 比較対象の映画館名、URL、識別子、ロゴなどを定義する設定ファイル。 |
 | `js/configLoader.js` | **[Issue #2] 作成済** | 外部設定ファイル `config/cinemas.json` を fetch して提供するモジュール。 |
 | `js/fetchers/corsProxy.js` | **[Issue #3] 作成済** | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONを動的フェッチするモジュール。 |
