@@ -9,7 +9,7 @@
     "siteUrl": "https://www.tohotheater.jp/theater/007/",
     "fetcherType": "toho",
     "theaterCode": "007",
-    "useDirectApi": true,
+    "useDirectApi": false,
     "color": "#e50914",
     "enabled": true
   },
@@ -23,7 +23,7 @@
     "siteUrl": "https://www.aeoncinema.com/cinema/shinyurigaoka/",
     "fetcherType": "aeon",
     "theaterCode": "shinyurigaoka",
-    "useDirectApi": true,
+    "useDirectApi": false,
     "color": "#800080",
     "enabled": true
   },
@@ -37,7 +37,7 @@
     "siteUrl": "https://109cinemas.net/grandberrypark/",
     "fetcherType": "tokyu109",
     "theaterCode": "grandberrypark",
-    "useDirectApi": true,
+    "useDirectApi": false,
     "color": "#005a9c",
     "enabled": true
   },
@@ -51,7 +51,7 @@
     "siteUrl": "https://www.aeoncinema.com/cinema/zama/",
     "fetcherType": "aeon",
     "theaterCode": "zama",
-    "useDirectApi": true,
+    "useDirectApi": false,
     "color": "#008080",
     "enabled": true
   }
