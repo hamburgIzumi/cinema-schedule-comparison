@@ -37,4 +37,8 @@
 
 8. **[Issue #8] 各映画館の直接API/データフェッチ方式への切り替えと切り戻し用安全スイッチの実装**
    - 詳細チケット: [ISSUE/issue-8.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-8.md)
+   - ステータス: 切り戻し完了 (Reverted to Original Mode)
+
+9. **[Issue #9] デモ（ダミー）データ表示時の明確化表示・警告バッジの実装**
+   - 詳細チケット: [ISSUE/issue-9.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-9.md)
    - ステータス: 完了 (Completed)

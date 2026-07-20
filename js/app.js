@@ -133,10 +133,19 @@ class CinemaApp {
       const filterText = searchInput ? searchInput.value : '';
       this.uiRender.renderMatrixTable(this.unifiedData, filterText);
 
+      // デモ（ダミー）データが含まれているか検証
+      const hasFallback = this.unifiedData.cinemas.some(c => c.isFallback);
+
       // 最終更新表示
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      if (statusText) statusText.textContent = `表示中: ${dateLabel} | 最終更新: ${timeStr}`;
+      if (statusText) {
+        if (hasFallback) {
+          statusText.innerHTML = `<span style="color: #fbbf24; font-weight: 600;">⚠️ 表示中: ${dateLabel} | 【一部デモ（ダミー）データ表示中】 (最終更新: ${timeStr})</span>`;
+        } else {
+          statusText.textContent = `表示中: ${dateLabel} | 最終更新: ${timeStr} (リアルタイム実データ取得完了)`;
+        }
+      }
 
     } catch (error) {
       console.error('App load error:', error);

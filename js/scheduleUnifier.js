@@ -61,7 +61,16 @@ export class ScheduleUnifier {
       return a.displayTitle.localeCompare(b.displayTitle, 'ja');
     });
 
-    // 3. マトリクス表示用データの構築
+    // 3. マトリクス表示用データの構築および映画館メタ情報（isFallback）の保持
+    const enrichedCinemas = cinemaConfigs.map(config => {
+      const fetchedCinema = cinemaSchedules.find(s => s.cinemaId === config.id);
+      return {
+        ...config,
+        isFallback: fetchedCinema ? !!fetchedCinema.isFallback : false,
+        fallbackReason: fetchedCinema ? fetchedCinema.fallbackReason : ''
+      };
+    });
+
     const matrix = uniqueMovies.map(movie => {
       const row = {
         title: movie.displayTitle,
@@ -69,7 +78,7 @@ export class ScheduleUnifier {
         cinemaSchedules: {}
       };
 
-      cinemaConfigs.forEach(config => {
+      enrichedCinemas.forEach(config => {
         row.cinemaSchedules[config.id] = movie.cinemas[config.id] || [];
       });
 
@@ -77,7 +86,7 @@ export class ScheduleUnifier {
     });
 
     return {
-      cinemas: cinemaConfigs,
+      cinemas: enrichedCinemas,
       uniqueMovies: uniqueMovies,
       matrix: matrix
     };
