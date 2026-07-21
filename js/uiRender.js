@@ -209,7 +209,7 @@ export class UIRender {
       cinemas.forEach(cinema => {
         const schedules = row.cinemaSchedules[cinema.id] || [];
 
-        html += `<td>`;
+        html += `<td data-cinema-name="${this.escapeHtml(cinema.name)}">`;
 
         if (schedules.length === 0) {
           html += `<div class="no-schedule">-</div>`;

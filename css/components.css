@@ -395,44 +395,125 @@
 
 /* タブレット / スマホ画面 (768px以下) */
 @media (max-width: 768px) {
+  /* マトリクスコンテナのスクロールを無効化（カードレイアウトなので縦スクロールのみに） */
   .matrix-container {
-    max-height: 65vh;
+    max-height: none;
+    overflow: visible;
+    background: none;
+    border: none;
+    box-shadow: none;
   }
 
-  .matrix-table {
-    min-width: 600px;
+  /* テーブル要素をブロック要素にしてカード化する */
+  .matrix-table,
+  .matrix-table thead,
+  .matrix-table tbody,
+  .matrix-table tr,
+  .matrix-table th,
+  .matrix-table td {
+    display: block;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    position: static !important;
+    box-shadow: none !important;
+    background: none !important;
+    border: none !important;
   }
 
-  .matrix-table th.col-movie-title,
+  /* 映画館名ヘッダーはスマホでは非表示（代わりに各カード内のtd::beforeで表示） */
+  .matrix-table thead {
+    display: none;
+  }
+
+  /* 各作品（tr）を1つの独立したカードとしてデザイン */
+  .matrix-table tbody tr {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    padding: 16px;
+    box-shadow: var(--shadow-glass);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: var(--transition-fast);
+  }
+
+  /* ゼブラ背景パターンとホバーハイライトをスマホでは無効化 */
+  .matrix-table tbody tr:nth-child(even) td {
+    background-color: transparent !important;
+  }
+  
+  .matrix-table tbody tr:nth-child(even) td.col-movie-title {
+    background-color: transparent !important;
+  }
+
+  .matrix-table tbody tr:hover td,
+  .matrix-table tbody tr:hover td.col-movie-title {
+    background-color: transparent !important;
+  }
+
+  /* 作品タイトル行 */
   .matrix-table td.col-movie-title {
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
-    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0 0 10px 0 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    text-align: left;
+    display: flex;
+    align-items: center;
   }
 
   .movie-title-text {
-    font-size: 0.88rem;
+    font-size: 1.05rem;
+    color: var(--text-primary);
   }
 
-  .matrix-table th {
-    padding: 12px 10px;
-    font-size: 0.88rem;
+  /* スケジュールセル（td） */
+  .matrix-table td:not(.col-movie-title) {
+    padding: 6px 0 !important;
+    text-align: left;
   }
 
-  .cinema-name {
-    font-size: 0.9rem;
+  /* 劇場名ラベルの動的表示（data-cinema-nameを利用） */
+  .matrix-table td:not(.col-movie-title)::before {
+    content: attr(data-cinema-name);
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent-blue);
+    padding-left: 8px;
   }
 
+  /* スケジュールカードのラッパー（縦スクロールから横ラップに変更） */
+  .schedule-cell-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  /* 各上映時間枠カード */
   .schedule-item-card {
-    padding: 6px 8px;
-    font-size: 0.78rem;
+    flex: 0 1 auto;
+    min-width: 90px;
+    padding: 8px 10px;
+    justify-content: center;
+    background: var(--bg-tertiary);
   }
 
-  .status-badge {
-    width: 24px;
-    height: 24px;
-    font-size: 0.75rem;
+  .no-schedule {
+    padding: 4px 8px;
+    font-style: italic;
+    color: var(--text-muted);
   }
 
   .legend-bar {
@@ -444,22 +525,6 @@
 
 /* 小型スマホ画面 (480px以下) */
 @media (max-width: 480px) {
-  .matrix-container {
-    max-height: 60vh;
-  }
-
-  .matrix-table th.col-movie-title,
-  .matrix-table td.col-movie-title {
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
-    padding: 10px 8px;
-  }
-
-  .movie-title-text {
-    font-size: 0.82rem;
-  }
-
   .date-tab-item {
     padding: 8px 12px;
     min-width: 85px;
@@ -467,5 +532,13 @@
 
   .date-tab-date {
     font-size: 0.9rem;
+  }
+
+  .matrix-table tbody tr {
+    padding: 12px;
+  }
+
+  .movie-title-text {
+    font-size: 0.95rem;
   }
 }
