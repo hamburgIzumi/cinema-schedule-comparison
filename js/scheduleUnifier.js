@@ -12,11 +12,28 @@ export class ScheduleUnifier {
   static normalizeTitle(title) {
     if (!title) return '';
 
+    // 全角英数字を半角に変換
     let normalized = title
-      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xfee0))
-      .replace(/[\(（【\[].*?[\)）】\]]/g, '')
-      .replace(/2D|3D|IMAX|4DX|Dolby Cinema|Dolby Atmos|ULTIRA|TCX|字幕|吹替|通常版/gi, '')
-      .trim();
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xfee0));
+
+    // かっこ書き (字幕、吹替など) の除去
+    normalized = normalized.replace(/[\(（【\[].*?[\)）】\]]/g, '');
+
+    // 上映フォーマットなどの不要なワード除去
+    normalized = normalized.replace(/2D|3D|IMAX|4DX|Dolby Cinema|Dolby Atmos|ULTIRA|TCX|字幕|吹替|通常版/gi, '');
+
+    // 日本語が含まれる場合に、末尾のローマ字・英語併記部分をトリム
+    const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(normalized);
+    if (hasJapanese) {
+      // スペース（半角または全角）の後に、英数字・スペース・一部記号のみが末尾まで続くパターンを切り捨てる
+      const match = normalized.match(/^(.*?)(?:[\s　]+[A-Za-z0-9\s\.,!\?\-_/&:]+)$/);
+      if (match) {
+        normalized = match[1];
+      }
+    }
+
+    // 全角スペースと半角スペースを統一してトリム
+    normalized = normalized.replace(/[\s　]+/g, ' ').trim();
 
     return normalized || title.trim();
   }
@@ -53,15 +70,29 @@ export class ScheduleUnifier {
         const normTitle = ScheduleUnifier.normalizeTitle(rawTitle);
 
         if (!movieMap.has(normTitle)) {
+          // 表示用タイトルのクリーンアップ
+          let displayTitle = rawTitle.replace(/[\(（【\[](字幕|吹替|2D|3D|IMAX|MX4D)[\)）】\]]/gi, '').trim();
+          displayTitle = displayTitle.replace(/[\s　]+/g, ' ').trim();
+
+          // tohoの英語併記除去を displayTitle にも適用
+          const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(displayTitle);
+          if (hasJapanese) {
+            const match = displayTitle.match(/^(.*?)(?:[\s　]+[A-Za-z0-9\s\.,!\?\-_/&:]+)$/);
+            if (match) {
+              displayTitle = match[1].trim();
+            }
+          }
+
           movieMap.set(normTitle, {
             normalizedTitle: normTitle,
-            displayTitle: rawTitle.replace(/[\(（【\[](字幕|吹替|2D|3D)[\)）】\]]/g, '').trim(),
+            displayTitle: displayTitle,
             cinemas: {}
           });
         }
 
         const movieEntry = movieMap.get(normTitle);
-        movieEntry.cinemas[cinemaId] = movie.schedules || [];
+        // 同一作品の別バージョン（通常/MX4D等）で上書きされないよう、既存配列があれば結合する
+        movieEntry.cinemas[cinemaId] = (movieEntry.cinemas[cinemaId] || []).concat(movie.schedules || []);
       });
     });
 

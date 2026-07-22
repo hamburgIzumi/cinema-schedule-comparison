@@ -22,5 +22,17 @@
     "corsProxyUrl": "https://api.allorigins.win/raw?url=",
     "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
     "useDirectApi": false
+  },
+  {
+    "id": "toho-ebina",
+    "name": "TOHOシネマズ 海老名",
+    "shortName": "TOHO海老名",
+    "brand": "toho",
+    "code": "007",
+    "color": "#ad0000",
+    "siteUrl": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
+    "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2160J01.do",
+    "corsProxyUrl": "https://api.allorigins.win/raw?url=",
+    "useDirectApi": false
   }
 ]
