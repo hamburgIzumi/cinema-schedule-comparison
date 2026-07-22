@@ -92,15 +92,9 @@
    - ステータス: 完了 (Completed)
 
 22. **[Issue #22] サイト内タイトル・メタ情報および説明文の汎用化（イオンシネマ単独表記の変更）**
-   - 詳細チケット: [ISSUE/issue-22.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-22.md)
-   - ステータス: 完了 (Completed)
+    - 詳細チケット: [ISSUE/issue-22.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-22.md)
+    - ステータス: 完了 (Completed)
 
 23. **[Issue #23] 日付変更（タブ切り替え）が視覚的・機能的に効かない不具合の修正とプロキシキャッシュ無効化の追加**
-   - 詳細チケット: [ISSUE/issue-23.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-23.md)
-   - ステータス: 計画中 (Planning)
-
-
-
-
-
-
+    - 詳細チケット: [ISSUE/issue-23.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-23.md)
+    - ステータス: 完了 (Completed)

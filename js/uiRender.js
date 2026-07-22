@@ -148,6 +148,22 @@ export class UIRender {
   }
 
   /**
+   * クラス操作（classList）によってアクティブな日付タブ表示を切り替える
+   * @param {string} selectedDateStr - YYYYMMDD形式の選択日付
+   */
+  updateActiveDateTab(selectedDateStr) {
+    if (!this.dateTabsContainer) return;
+    const tabItems = this.dateTabsContainer.querySelectorAll('.date-tab-item');
+    tabItems.forEach(item => {
+      if (item.dataset.datestr === selectedDateStr) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  /**
    * 統合マトリクスデータから比較表HTMLを動的レンダリングする
    */
   renderMatrixTable(unifiedData, filterText = '') {
