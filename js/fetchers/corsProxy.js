@@ -70,8 +70,10 @@ export class CorsProxyService {
 
   /**
    * パブリックプロキシ経由でHTML文字列を取得する
+   * @param {string} targetUrl - 取得対象URL
+   * @param {string} encoding - 文字エンコーディング（デフォルト 'utf-8'）
    */
-  async fetchHtml(targetUrl) {
+  async fetchHtml(targetUrl, encoding = 'utf-8') {
     let lastError = null;
 
     for (const proxyGen of this.proxies) {
@@ -83,7 +85,16 @@ export class CorsProxyService {
         });
 
         if (response.ok) {
-          const htmlText = await response.text();
+          let htmlText;
+          if (encoding.toLowerCase() === 'utf-8') {
+            htmlText = await response.text();
+          } else {
+            // Shift_JISなどの別文字コードのデコード処理
+            const buffer = await response.arrayBuffer();
+            const decoder = new TextDecoder(encoding);
+            htmlText = decoder.decode(buffer);
+          }
+
           if (htmlText && htmlText.length > 100) {
             return htmlText;
           }

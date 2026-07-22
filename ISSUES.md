@@ -72,5 +72,20 @@
    - ステータス: 完了 (Completed)
 
 17. **[Issue #17] 詳細モーダルの閉じる処理不具合およびスマホアクセス時のデータ取得不具合の修正**
-   - 詳細チケット: [ISSUE/issue-17.md](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/ISSUE/issue-17.md)
+   - 詳細チケット: [ISSUE/issue-17.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-17.md)
    - ステータス: 完了 (Completed)
+
+18. **[Issue #18] TOHOシネマズ海老名の上映スケジュール追加対応（印刷用ページスクレイピング）**
+   - 詳細チケット: [ISSUE/issue-18.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-18.md)
+   - ステータス: 完了 (Completed)
+
+19. **[Issue #19] 上映作品タイトルの英語・ローマ字併記に伴う名寄せ（ユニーク化）処理の最適化**
+   - 詳細チケット: [ISSUE/issue-19.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-19.md)
+   - ステータス: 完了 (Completed)
+
+20. **[Issue #20] 同一映画館内の同名作品スケジュールの上書きバグ修正とTOHO上映フォーマット解析の強化**
+   - 詳細チケット: [ISSUE/issue-20.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-20.md)
+   - ステータス: 計画中 (Planning)
+
+
+

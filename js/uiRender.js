@@ -251,6 +251,7 @@ export class UIRender {
       case '◯': return 'status-available';
       case '△': return 'status-few';
       case '×': return 'status-full';
+      case '-': return 'status-none'; // 空席情報なし（TOHOシネマズ印刷用ページ対応）
       default: return 'status-available';
     }
   }
