@@ -16,6 +16,9 @@ export class ScheduleUnifier {
     let normalized = title
       .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xfee0));
 
+    // スラッシュを半角スペースに変換して区切りを統一（例: Michael/マイケル -> Michael マイケル）
+    normalized = normalized.replace(/[\/／]/g, ' ');
+
     // かっこ書き (字幕、吹替など) の除去
     normalized = normalized.replace(/[\(（【\[].*?[\)）】\]]/g, '');
 
@@ -72,6 +75,9 @@ export class ScheduleUnifier {
         if (!movieMap.has(normTitle)) {
           // 表示用タイトルのクリーンアップ
           let displayTitle = rawTitle.replace(/[\(（【\[](字幕|吹替|2D|3D|IMAX|MX4D)[\)）】\]]/gi, '').trim();
+          
+          // スラッシュを半角スペースに変換して区切りを統一する（例: Michael/マイケル -> Michael マイケル）
+          displayTitle = displayTitle.replace(/[\/／]/g, ' ');
           displayTitle = displayTitle.replace(/[\s　]+/g, ' ').trim();
 
           // tohoの英語併記除去を displayTitle にも適用
