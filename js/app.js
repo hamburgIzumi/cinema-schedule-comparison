@@ -40,15 +40,8 @@ class CinemaApp {
       this.initializeFetchers();
       this.setupEventListeners();
 
-      // 日付選択タブのレンダリング
-      const selectedDateObj = this.parseDateString(this.selectedDate);
-      this.uiRender.renderDateTabs(selectedDateObj, (newDateObj) => {
-        const yyyy = newDateObj.getFullYear();
-        const mm = String(newDateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(newDateObj.getDate()).padStart(2, '0');
-        this.selectedDate = `${yyyy}${mm}${dd}`;
-        this.loadSchedules();
-      });
+      // 日付選択タブの初期レンダリング
+      this.updateDateTabs();
 
       await this.loadSchedules();
 
@@ -135,10 +128,27 @@ class CinemaApp {
         statusText.textContent = `表示中: ${dateLabel} | 最終更新: ${timeStr}`;
       }
 
+      // 日付選択タブのアクティブ表示を同期するために再描画
+      this.updateDateTabs();
+
     } catch (error) {
       console.error('スケジュール読み込みエラー:', error);
       this.uiRender.renderError('データ取得エラー', 'スケジュールの読み込みに失敗しました。');
     }
+  }
+
+  /**
+   * 日付選択タブの表示更新とクリックイベントの紐付け
+   */
+  updateDateTabs() {
+    const selectedDateObj = this.parseDateString(this.selectedDate);
+    this.uiRender.renderDateTabs(selectedDateObj, (newDateObj) => {
+      const yyyy = newDateObj.getFullYear();
+      const mm = String(newDateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(newDateObj.getDate()).padStart(2, '0');
+      this.selectedDate = `${yyyy}${mm}${dd}`;
+      this.loadSchedules();
+    });
   }
 }
 
