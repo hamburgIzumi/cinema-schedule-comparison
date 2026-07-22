@@ -89,7 +89,12 @@
 
 21. **[Issue #21] 作品タイトル内のスラッシュ区切りに伴う名寄せ漏れの解消**
    - 詳細チケット: [ISSUE/issue-21.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-21.md)
+   - ステータス: 完了 (Completed)
+
+22. **[Issue #22] サイト内タイトル・メタ情報および説明文の汎用化（イオンシネマ単独表記の変更）**
+   - 詳細チケット: [ISSUE/issue-22.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-22.md)
    - ステータス: 計画中 (Planning)
+
 
 
 
