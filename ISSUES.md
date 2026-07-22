@@ -85,7 +85,12 @@
 
 20. **[Issue #20] 同一映画館内の同名作品スケジュールの上書きバグ修正とTOHO上映フォーマット解析の強化**
    - 詳細チケット: [ISSUE/issue-20.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-20.md)
+   - ステータス: 完了 (Completed)
+
+21. **[Issue #21] 作品タイトル内のスラッシュ区切りに伴う名寄せ漏れの解消**
+   - 詳細チケット: [ISSUE/issue-21.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-21.md)
    - ステータス: 計画中 (Planning)
+
 
 
 
