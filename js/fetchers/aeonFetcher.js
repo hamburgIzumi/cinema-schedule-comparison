@@ -74,7 +74,8 @@ export class AeonFetcher {
     if (baseUrl.includes('?')) {
       baseUrl = baseUrl.split('?')[0];
     }
-    const targetUrl = `${baseUrl}?date=${dateStr}`;
+    // プロキシのキャッシュ対策としてタイムスタンプ（キャッシュバスター）を付与
+    const targetUrl = `${baseUrl}?date=${dateStr}&_=${Date.now()}`;
 
     try {
       const html = await this.corsProxy.fetchHtml(targetUrl);

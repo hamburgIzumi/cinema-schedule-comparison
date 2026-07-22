@@ -40,13 +40,17 @@ class CinemaApp {
       this.initializeFetchers();
       this.setupEventListeners();
 
-      // 日付選択タブのレンダリング
+      // 日付選択タブの初期レンダリングとクリックイベントのバインド
       const selectedDateObj = this.parseDateString(this.selectedDate);
       this.uiRender.renderDateTabs(selectedDateObj, (newDateObj) => {
         const yyyy = newDateObj.getFullYear();
         const mm = String(newDateObj.getMonth() + 1).padStart(2, '0');
         const dd = String(newDateObj.getDate()).padStart(2, '0');
         this.selectedDate = `${yyyy}${mm}${dd}`;
+        
+        // クリックした瞬間にタブのアクティブ状態を切り替える（即時フィードバック）
+        this.uiRender.updateActiveDateTab(this.selectedDate);
+        
         this.loadSchedules();
       });
 
@@ -134,6 +138,9 @@ class CinemaApp {
       if (statusText) {
         statusText.textContent = `表示中: ${dateLabel} | 最終更新: ${timeStr}`;
       }
+
+      // 描画完了後に日付タブのアクティブ状態を同期
+      this.uiRender.updateActiveDateTab(this.selectedDate);
 
     } catch (error) {
       console.error('スケジュール読み込みエラー:', error);

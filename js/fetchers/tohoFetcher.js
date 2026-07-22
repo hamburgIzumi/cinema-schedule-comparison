@@ -66,7 +66,8 @@ export class TohoFetcher {
       baseUrl = baseUrl.split('?')[0];
     }
     // 劇場コード (site_cd) と上映日 (show_day) を指定
-    const targetUrl = `${baseUrl}?site_cd=${this.config.code || '007'}&show_day=${dateStr}`;
+    // プロキシのキャッシュ回避のためのキャッシュバスター（_dc）を追加
+    const targetUrl = `${baseUrl}?site_cd=${this.config.code || '007'}&show_day=${dateStr}&_dc=${Date.now()}`;
 
     try {
       // Shift_JISでデコードして取得
