@@ -102,3 +102,7 @@
 24. **[Issue #24] 109シネマズグランベリーパークの上映スケジュール追加対応**
     - 詳細チケット: [ISSUE/issue-24.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-24.md)
     - ステータス: 完了 (Completed)
+
+25. **[Issue #25] 上映スケジュールデータ取得の高速化（キャッシュ＆タイムスタンプ制御）**
+    - 詳細チケット: [ISSUE/issue-25.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-25.md)
+    - ステータス: 完了 (Completed)

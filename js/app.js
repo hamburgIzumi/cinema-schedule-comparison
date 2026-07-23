@@ -86,7 +86,7 @@ class CinemaApp {
     const refreshBtn = document.getElementById('btn-refresh') || document.getElementById('refresh-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
-        this.loadSchedules();
+        this.loadSchedules(true);
       });
     }
 
@@ -101,9 +101,46 @@ class CinemaApp {
     }
   }
 
-  async loadSchedules() {
-    this.uiRender.renderSkeleton();
+  async loadSchedules(force = false) {
+    const cacheKey = `cinema-schedule-${this.selectedDate}`;
     const statusText = document.getElementById('status-update-time') || document.getElementById('status-text');
+
+    // キャッシュ確認 (forceでない場合)
+    if (!force) {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const cacheObj = JSON.parse(cached);
+          const age = Date.now() - cacheObj.timestamp;
+          // 有効期限を 15分 (900000ms) とする
+          if (age < 15 * 60 * 1000) {
+            this.unifiedData = cacheObj.unifiedData;
+            
+            const searchInput = document.getElementById('movie-search-input') || document.getElementById('search-movie-input');
+            const filterText = searchInput ? searchInput.value : '';
+            this.uiRender.renderMatrixTable(this.unifiedData, filterText);
+
+            const lastUpdatedTime = new Date(cacheObj.timestamp);
+            const timeStr = lastUpdatedTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const year = this.selectedDate.substring(0, 4);
+            const month = this.selectedDate.substring(4, 6);
+            const day = this.selectedDate.substring(6, 8);
+            const dateLabel = `${year}年${month}月${day}日`;
+
+            if (statusText) {
+              statusText.textContent = `表示中: ${dateLabel} | キャッシュから表示 (取得: ${timeStr})`;
+            }
+
+            this.uiRender.updateActiveDateTab(this.selectedDate);
+            return;
+          }
+        }
+      } catch (cacheError) {
+        console.warn('キャッシュの読み込みに失敗しました:', cacheError);
+      }
+    }
+
+    this.uiRender.renderSkeleton();
     if (statusText) {
       statusText.textContent = '最新の上映スケジュールを取得中...';
     }
@@ -126,6 +163,17 @@ class CinemaApp {
       });
 
       this.unifiedData = this.scheduleUnifier.unify(this.cinemasConfig, cinemaSchedules, this.selectedDate);
+
+      // 取得成功時にセッションストレージに保存
+      try {
+        const cacheObj = {
+          unifiedData: this.unifiedData,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheObj));
+      } catch (saveError) {
+        console.warn('キャッシュの保存に失敗しました:', saveError);
+      }
 
       const searchInput = document.getElementById('movie-search-input') || document.getElementById('search-movie-input');
       const filterText = searchInput ? searchInput.value : '';
