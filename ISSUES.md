@@ -105,4 +105,4 @@
 
 25. **[Issue #25] 上映スケジュールデータ取得の高速化（キャッシュ＆タイムスタンプ制御）**
     - 詳細チケット: [ISSUE/issue-25.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-25.md)
-    - ステータス: 開発中 (In Progress)
+    - ステータス: 完了 (Completed)
