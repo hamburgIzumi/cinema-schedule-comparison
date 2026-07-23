@@ -77,12 +77,18 @@ export class CorsProxyService {
     let lastError = null;
 
     for (const proxyGen of this.proxies) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
       try {
         const proxyUrl = proxyGen(targetUrl);
         const response = await fetch(proxyUrl, {
           method: 'GET',
-          headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' }
+          headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' },
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           let htmlText;
@@ -100,6 +106,7 @@ export class CorsProxyService {
           }
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         lastError = error;
       }
     }
