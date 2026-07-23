@@ -5,6 +5,7 @@
 
 import { AeonFetcher } from './fetchers/aeonFetcher.js';
 import { TohoFetcher } from './fetchers/tohoFetcher.js';
+import { Cinema109Fetcher } from './fetchers/109Fetcher.js';
 import { ScheduleUnifier } from './scheduleUnifier.js';
 import { UIRender } from './uiRender.js';
 
@@ -73,6 +74,8 @@ class CinemaApp {
     this.fetchers = this.cinemasConfig.map(config => {
       if (config.brand === 'toho') {
         return new TohoFetcher(config);
+      } else if (config.brand === '109') {
+        return new Cinema109Fetcher(config);
       }
       return new AeonFetcher(config);
     });

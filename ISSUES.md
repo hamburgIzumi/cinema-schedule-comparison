@@ -98,3 +98,7 @@
 23. **[Issue #23] 日付変更（タブ切り替え）が視覚的・機能的に効かない不具合の修正とプロキシキャッシュ無効化の追加**
     - 詳細チケット: [ISSUE/issue-23.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-23.md)
     - ステータス: 完了 (Completed)
+
+24. **[Issue #24] 109シネマズグランベリーパークの上映スケジュール追加対応**
+    - 詳細チケット: [ISSUE/issue-24.md](file:///c:/Users/setsu/Documents/toybox/cinema-schedule-comparison/ISSUE/issue-24.md)
+    - ステータス: 開発中 (In Progress)

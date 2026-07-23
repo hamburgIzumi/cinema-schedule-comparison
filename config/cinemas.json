@@ -34,5 +34,17 @@
     "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2160J01.do",
     "corsProxyUrl": "https://api.allorigins.win/raw?url=",
     "useDirectApi": false
+  },
+  {
+    "id": "109-grandberrypark",
+    "name": "109シネマズ グランベリーパーク",
+    "shortName": "109グランベリー",
+    "brand": "109",
+    "code": "G1",
+    "color": "#005baa",
+    "siteUrl": "https://109cinemas.net/grandberrypark/",
+    "url": "https://109cinemas.net/grandberrypark/schedules/",
+    "corsProxyUrl": "https://api.allorigins.win/raw?url=",
+    "useDirectApi": false
   }
 ]
