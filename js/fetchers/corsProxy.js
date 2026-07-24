@@ -55,13 +55,21 @@ export class CorsProxyService {
    */
   async fetchJson(targetUrl) {
     for (const proxyGen of this.proxies) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
       try {
         const proxyUrl = proxyGen(targetUrl);
-        const res = await fetch(proxyUrl, { method: 'GET' });
+        const res = await fetch(proxyUrl, {
+          method: 'GET',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
         if (res.ok) {
           return await res.json();
         }
       } catch (e) {
+        clearTimeout(timeoutId);
         console.warn(`CORS Proxy fetchJson error for ${targetUrl}:`, e);
       }
     }
