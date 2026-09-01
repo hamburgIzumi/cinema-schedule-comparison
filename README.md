@@ -1,3 +1,5 @@
+# デモページ
+https://hamburgizumi.github.io/cinema-schedule-comparison/
 # 映画館上映スケジュール比較 (Cinema Schedule Comparison)
 
 複数映画館（TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズ南町田グランベリーパーク、イオンシネマ座間）の上映スケジュールおよび空席状況をリアルタイム・動的に比較閲覧できるWebアプリケーションです。
