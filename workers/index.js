@@ -266,22 +266,18 @@ async function fetch109Schedule(cinemaId, dateStr) {
 
 /**
  * 109シネマズのHTMLをRegexでパース
- * 構造: #timetable article > header h2 (タイトル),
+ * 構造: article > header h2 (タイトル),
  *        ul.timetable > li.theatre (.theatre-num) + li.check_date (.start + .end)
  */
 function parse109Html(html) {
   const movies = [];
   const siteBase = 'https://109cinemas.net';
 
-  // #timetable セクションを抽出
-  const timetableMatch = /<(?:section|div)[^>]+id="timetable"[^>]*>([\s\S]*?)(?=<(?:section|div)[^>]+id="|$)/i.exec(html);
-  const timetableHtml = timetableMatch ? timetableMatch[1] : html;
-
-  // article ブロックをタイトルで分割
+  // article ブロック（各映画作品）を抽出
   const articlePattern = /<article[^>]*>([\s\S]*?)<\/article>/gi;
   let articleMatch;
 
-  while ((articleMatch = articlePattern.exec(timetableHtml)) !== null) {
+  while ((articleMatch = articlePattern.exec(html)) !== null) {
     const fullArticleHtml = articleMatch[0];
 
     // タイトルを h2 から取得
@@ -323,8 +319,8 @@ function parse109Html(html) {
       else if (lowerTitle.includes('吹替')) screenFormat += ' / 吹替';
       screenFormat = screenFormat.replace(/^2D \/ /, '');
 
-      // 各上映回 (li.check_date)
-      const checkDatePattern = /<li[^>]+class="[^"]*check_date[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
+      // 各上映回 (li.check_date) ※HTML5で </li> 閉じタグが省略されているため、次の <li か </ul> 前まで抽出
+      const checkDatePattern = /<li[^>]+class="[^"]*check_date[^"]*"[^>]*>([\s\S]*?)(?=<li|<\/ul>|$)/gi;
       let cdMatch;
 
       while ((cdMatch = checkDatePattern.exec(ulContent)) !== null) {
@@ -341,7 +337,11 @@ function parse109Html(html) {
 
         // 予約リンク
         const linkMatch = /href="([^"]+)"/i.exec(cdContent);
-        const reserveUrl = linkMatch ? (linkMatch[1].startsWith('http') ? linkMatch[1] : siteBase + linkMatch[1]) : 'https://109cinemas.net/grandberrypark/';
+        let reserveUrl = 'https://109cinemas.net/grandberrypark/';
+        if (linkMatch) {
+          const rawHref = linkMatch[1].replace(/&amp;/g, '&');
+          reserveUrl = rawHref.startsWith('http') ? rawHref : siteBase + rawHref;
+        }
 
         // 空席ステータス
         let status = '-';
@@ -353,7 +353,6 @@ function parse109Html(html) {
         } else if (cdContent.includes('class="soldout"') || cdContent.includes("class='soldout'")) {
           status = '×'; statusText = '完売';
         } else if (linkMatch) {
-          // リンクがある場合は予約可能と判定
           status = '◯'; statusText = '予約可能';
         }
 
