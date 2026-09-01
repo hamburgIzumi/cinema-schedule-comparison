@@ -33,6 +33,7 @@
     "siteUrl": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do",
     "url": "https://hlo.tohotheater.jp/net/schedule/007/TNPI2160J01.do",
     "corsProxyUrl": "https://api.allorigins.win/raw?url=",
+    "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
     "useDirectApi": false
   },
   {
@@ -45,6 +46,7 @@
     "siteUrl": "https://109cinemas.net/grandberrypark/",
     "url": "https://109cinemas.net/grandberrypark/schedules/",
     "corsProxyUrl": "https://api.allorigins.win/raw?url=",
+    "workersApiUrl": "https://cinema-schedule-proxy.setsuna-you.workers.dev",
     "useDirectApi": false
   }
 ]
