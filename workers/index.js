@@ -223,13 +223,8 @@ async function fetch109Schedule(cinemaId, dateStr) {
   const cinemaName = '109シネマズ グランベリーパーク';
   const baseUrl = 'https://109cinemas.net/grandberrypark/schedules/';
 
-  // 日付フォーマットを YYYY-MM-DD に変換 (109シネマズのURLは YYYY-MM-DD 形式)
-  const yyyy = dateStr.substring(0, 4);
-  const mm = dateStr.substring(4, 6);
-  const dd = dateStr.substring(6, 8);
-  const dateDashed = `${yyyy}-${mm}-${dd}`;
-
-  const targetUrl = `${baseUrl}${dateDashed}.html`;
+  // 正しいURL形式: YYYYMMDD.html?theater_code=G1
+  const targetUrl = `${baseUrl}${dateStr}.html?theater_code=G1`;
 
   const response = await fetch(targetUrl, {
     headers: {
@@ -241,7 +236,7 @@ async function fetch109Schedule(cinemaId, dateStr) {
   });
 
   if (!response.ok) {
-    // 古いURLフォーマット (YYYYMMDD.html) でリトライ
+    // リトライ: クエリなし YYYYMMDD.html
     const fallbackUrl = `${baseUrl}${dateStr}.html`;
     const fallbackRes = await fetch(fallbackUrl, {
       headers: {
@@ -287,10 +282,10 @@ function parse109Html(html) {
   let articleMatch;
 
   while ((articleMatch = articlePattern.exec(timetableHtml)) !== null) {
-    const articleContent = articleMatch[1];
+    const fullArticleHtml = articleMatch[0];
 
     // タイトルを h2 から取得
-    const h2Match = /<h2[^>]*>([\s\S]*?)<\/h2>/i.exec(articleContent);
+    const h2Match = /<h2[^>]*>([\s\S]*?)<\/h2>/i.exec(fullArticleHtml);
     if (!h2Match) continue;
     const title = stripHtml(h2Match[1]).trim();
     if (!title) continue;
@@ -301,7 +296,7 @@ function parse109Html(html) {
     const ulPattern = /<ul[^>]+class="[^"]*timetable[^"]*"[^>]*>([\s\S]*?)<\/ul>/gi;
     let ulMatch;
 
-    while ((ulMatch = ulPattern.exec(articleContent)) !== null) {
+    while ((ulMatch = ulPattern.exec(fullArticleHtml)) !== null) {
       const ulContent = ulMatch[1];
 
       // スクリーン情報 (li.theatre)

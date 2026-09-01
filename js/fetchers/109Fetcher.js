@@ -85,11 +85,8 @@ export class Cinema109Fetcher {
       baseUrl += '/';
     }
 
-    // 109シネマズのURLフォーマット: YYYY-MM-DD.html
-    const yyyy = dateStr.substring(0, 4);
-    const mm = dateStr.substring(4, 6);
-    const dd = dateStr.substring(6, 8);
-    const targetUrl = `${baseUrl}${yyyy}-${mm}-${dd}.html`;
+    // 109シネマズのURLフォーマット: YYYYMMDD.html?theater_code=G1
+    const targetUrl = `${baseUrl}${dateStr}.html?theater_code=G1`;
 
     try {
       // UTF-8でデコードして取得
@@ -97,7 +94,7 @@ export class Cinema109Fetcher {
       const doc = this.corsProxy.parseDom(html);
 
       const movies = [];
-      const articles = doc.querySelectorAll('#timetable article');
+      const articles = doc.querySelectorAll('#timetable article[id^="m"], #timetable article');
 
       articles.forEach(article => {
         const headerEl = article.querySelector('header h2');
