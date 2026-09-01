@@ -1,6 +1,8 @@
 /**
  * @file 109Fetcher.js
  * @description 109シネマズ（グランベリーパーク）の上映スケジュールデータを動的に抽出・パースするFetcherモジュール
+ * Workers APIが設定済みの場合はCloudflare Workers経由でスクレイピングを実行。
+ * 未設定の場合はパブリックCORSプロキシ経由でHTMLを直接取得する（フォールバック）。
  */
 
 import { CorsProxyService } from './corsProxy.js';
@@ -41,6 +43,21 @@ export class Cinema109Fetcher {
     }
 
     try {
+      // Workers APIが設定されていればそちらを優先使用
+      if (this.config.workersApiUrl) {
+        const result = await this.corsProxy.fetchFromWorkersApi(
+          this.config.workersApiUrl,
+          this.config.id,
+          dateStr
+        );
+        if (result) {
+          console.log(`109: Workers API経由でデータ取得成功 (${result.movies?.length ?? 0}作品)`);
+          return result;
+        }
+        console.warn('109: Workers APIから空データ。パブリックプロキシにフォールバック');
+      }
+
+      // フォールバック: パブリックCORSプロキシ経由でHTMLスクレイピング
       return await this.fetchScheduleFromHtml(dateObj, dateStr);
     } catch (error) {
       console.warn(`109 fetch error for ${this.config.name}:`, error);
@@ -56,6 +73,7 @@ export class Cinema109Fetcher {
 
   /**
    * 109cinemas.net の上映スケジュールページからHTMLを取得・スクレイピング処理
+   * （Workers API未設定時のフォールバック）
    */
   async fetchScheduleFromHtml(dateObj, dateStr) {
     let baseUrl = this.config.url || '';
@@ -66,9 +84,12 @@ export class Cinema109Fetcher {
     if (!baseUrl.endsWith('/')) {
       baseUrl += '/';
     }
-    
-    // HTMLのファイル名を指定
-    const targetUrl = `${baseUrl}${dateStr}.html?theater_code=${this.config.code || 'G1'}&_=${Date.now()}`;
+
+    // 109シネマズのURLフォーマット: YYYY-MM-DD.html
+    const yyyy = dateStr.substring(0, 4);
+    const mm = dateStr.substring(4, 6);
+    const dd = dateStr.substring(6, 8);
+    const targetUrl = `${baseUrl}${yyyy}-${mm}-${dd}.html`;
 
     try {
       // UTF-8でデコードして取得
@@ -97,15 +118,15 @@ export class Cinema109Fetcher {
           const theatreNum = theatreNumEl ? theatreNumEl.textContent.trim() : '';
           const screenName = `シアター${theatreNum}`;
 
-          // 上映方式/音響等の抽出 (theatreElの直下のテキストノードから抽出)
+          // 上映方式/音響等の抽出
           let formats = [];
           const text = theatreEl.textContent || '';
-          
+
           if (text.includes('IMAX')) formats.push('IMAX');
           else if (text.includes('4DX')) formats.push('4DX');
           else if (text.includes('SAION')) formats.push('SAION');
           else if (text.includes('3D')) formats.push('3D');
-          
+
           if (formats.length === 0) {
             formats.push('2D');
           }
@@ -131,7 +152,7 @@ export class Cinema109Fetcher {
             const endTime = endEl.textContent.trim();
             const timeRange = `${startTime}-${endTime}`;
 
-            // 予約リンク（メンテナンス中などでaタグがない場合は公式サイトURLをフォールバックにする）
+            // 予約リンク
             const linkEl = cell.querySelector('a');
             const reserveUrl = linkEl ? linkEl.getAttribute('href') : (this.config.siteUrl || 'https://109cinemas.net/grandberrypark/');
 
@@ -142,7 +163,7 @@ export class Cinema109Fetcher {
             const availableEl = cell.querySelector('.available');
             const remainingEl = cell.querySelector('.remaining');
             const soldoutEl = cell.querySelector('.soldout');
-            
+
             if (availableEl) {
               status = '◎';
               statusText = '空席あり';
@@ -152,6 +173,9 @@ export class Cinema109Fetcher {
             } else if (soldoutEl) {
               status = '×';
               statusText = '完売';
+            } else if (linkEl) {
+              status = '◯';
+              statusText = '予約可能';
             }
 
             schedules.push({

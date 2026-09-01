@@ -1,6 +1,8 @@
 /**
  * @file tohoFetcher.js
  * @description TOHOシネマズ（海老名）の上映スケジュールデータを動的に抽出・パースするFetcherモジュール
+ * Workers APIが設定済みの場合はCloudflare Workers経由でスクレイピングを実行。
+ * 未設定の場合はパブリックCORSプロキシ経由でHTMLを直接取得する（フォールバック）。
  */
 
 import { CorsProxyService } from './corsProxy.js';
@@ -41,6 +43,21 @@ export class TohoFetcher {
     }
 
     try {
+      // Workers APIが設定されていればそちらを優先使用
+      if (this.config.workersApiUrl) {
+        const result = await this.corsProxy.fetchFromWorkersApi(
+          this.config.workersApiUrl,
+          this.config.id,
+          dateStr
+        );
+        if (result) {
+          console.log(`TOHO: Workers API経由でデータ取得成功 (${result.movies?.length ?? 0}作品)`);
+          return result;
+        }
+        console.warn('TOHO: Workers APIから空データ。パブリックプロキシにフォールバック');
+      }
+
+      // フォールバック: パブリックCORSプロキシ経由でHTMLスクレイピング
       return await this.fetchScheduleFromHtml(dateObj, dateStr);
     } catch (error) {
       console.warn(`TOHO fetch error for ${this.config.name}:`, error);
@@ -56,6 +73,7 @@ export class TohoFetcher {
 
   /**
    * hlo.tohotheater.jp の印刷用スケジュールページからHTMLを取得・スクレイピング処理
+   * （Workers API未設定時のフォールバック）
    */
   async fetchScheduleFromHtml(dateObj, dateStr) {
     let baseUrl = this.config.url || '';
@@ -111,32 +129,29 @@ export class TohoFetcher {
                 // &nbsp; などの空セルは除外
                 if (!cellText || cellText === '\u00a0' || cellText === '') return;
 
-                // 23:00以降の画像等が含まれている場合も考慮して hh:mm-hh:mm 形式を正規表現で抽出
+                // hh:mm-hh:mm 形式を正規表現で抽出
                 cellText = cellText.replace(/\s+/g, '').replace(/[\r\n]/g, '');
                 const timeMatch = cellText.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
                 if (!timeMatch) return;
 
-                const timeRange = timeMatch[0]; // 例: "8:35-11:10"
-                const startTime = timeMatch[1]; // 例: "8:35"
-                const endTime = timeMatch[2];   // 例: "11:10"
+                const timeRange = timeMatch[0];
+                const startTime = timeMatch[1];
+                const endTime = timeMatch[2];
 
-                // タイトルから上映フォーマットを多角的に判定
+                // タイトルから上映フォーマットを判定
                 let formats = [];
                 const lowerTitle = titleEl.textContent.toLowerCase();
 
-                // 1. 上映システム/スクリーンの判定
                 if (lowerTitle.includes('mx4d')) formats.push('MX4D');
                 else if (lowerTitle.includes('imax')) formats.push('IMAX');
                 else if (lowerTitle.includes('3d')) formats.push('3D');
 
-                // 2. 音声・翻訳種別の判定 (印刷用タイトル「OBSESSION / SUB」などの / SUB や / DUB から判定)
                 if (lowerTitle.includes('sub') || lowerTitle.includes('字幕')) {
                   formats.push('字幕');
                 } else if (lowerTitle.includes('dub') || lowerTitle.includes('吹替')) {
                   formats.push('吹替');
                 }
 
-                // formatsが空の場合はデフォルトとして「2D」を設定
                 const format = formats.join(' ') || '2D';
 
                 // 空席情報は印刷ページにはないのでブランク表示を設定

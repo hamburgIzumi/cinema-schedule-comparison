@@ -40,7 +40,9 @@ export class CorsProxyService {
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.movies && data.movies.length > 0) {
+        // movies配列が存在すれば正常レスポンスとみなす（空配列も含む）
+        // errorフラグが立っている場合のみnullを返す
+        if (data && Array.isArray(data.movies) && !data.error) {
           return data;
         }
       }

@@ -2,7 +2,7 @@
 https://hamburgizumi.github.io/cinema-schedule-comparison/
 # 映画館上映スケジュール比較 (Cinema Schedule Comparison)
 
-複数映画館（TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズ南町田グランベリーパーク、イオンシネマ座間）の上映スケジュールおよび空席状況をリアルタイム・動的に比較閲覧できるWebアプリケーションです。
+複数映画館（TOHOシネマズ海老名、イオンシネマ新百合ヶ丘、109シネマズグランベリーパーク、イオンシネマ座間）の上映スケジュールおよび空席状況をリアルタイム・動的に比較閲覧できるWebアプリケーションです。
 
 ---
 
@@ -22,47 +22,43 @@ https://hamburgizumi.github.io/cinema-schedule-comparison/
 ```
 cinema-schedule-comparison/
 ├── README.md                    # 本ドキュメント（全体概要・構成・使い方）
-├── ISSUES.md                    # Issue管理インデックスドキュメント
 ├── index.html                   # アプリメインWebページ
-├── ISSUE/                       # 個別Issueチケット管理フォルダ
-├── prompt/
-│   └── prompt.md                # 要件定義・プロンプト指示書
 ├── config/
 │   └── cinemas.json             # 比較対象映画館の設定ファイル
 ├── css/
 │   ├── main.css                 # デザインシステム・ダークモード・ベーススタイル
 │   └── components.css           # マトリクス表・空席バッジ・モーダルCSS
-└── js/
-    ├── app.js                   # 全体初期化・イベント制御・更新統括
-    ├── configLoader.js          # cinemas.json 読み込みモジュール
-    ├── fetchers/
-    │   ├── corsProxy.js         # CORSプロキシ経由の通信処理
-    │   ├── tohoFetcher.js       # TOHOシネマズ海老名用動的パース
-    │   ├── aeonFetcher.js       # イオンシネマ（新百合ヶ丘・座間）用動的パース
-    │   └── 109Fetcher.js        # 109シネマズグランベリーパーク用動的パース
-    ├── scheduleUnifier.js       # MAX方式作品ユニーク化＆マトリクス構造生成
-    └── uiRender.js              # DOM描画・検索フィルター・モーダル制御
+├── js/
+│   ├── app.js                   # 全体初期化・イベント制御・更新統括
+│   ├── configLoader.js          # cinemas.json 読み込みモジュール
+│   ├── fetchers/
+│   │   ├── corsProxy.js         # CORSプロキシ経由の通信処理
+│   │   ├── tohoFetcher.js       # TOHOシネマズ海老名用動的パース
+│   │   ├── aeonFetcher.js       # イオンシネマ（新百合ヶ丘・座間）用動的パース
+│   │   └── 109Fetcher.js        # 109シネマズグランベリーパーク用動的パース
+│   ├── scheduleUnifier.js       # MAX方式作品ユニーク化＆マトリクス構造生成
+│   └── uiRender.js              # DOM描画・検索フィルター・モーダル制御
+└── workers/
+    └── index.js                 # Cloudflare Workers リアルタイムプロキシAPIスクリプト
 ```
 
 ### ファイル詳細説明一覧
 
-| ファイル / フォルダ | ステータス | 説明 |
-| :--- | :--- | :--- |
-| `README.md` | 作成済 | プロジェクトの概要、ディレクトリ構成、各ファイルの説明、利用手順を記載するメインドキュメント。 |
-| `ISSUES.md` | 作成済 | 全Issueの起票状況および概要をまとめたインデックスドキュメント。 |
-| `ISSUE/` | 作成済 | 個別Issueの目的・実装内容・完了条件を管理するMarkdownチケット格納フォルダ。 |
-| `config/cinemas.json` | 作成済 | 比較対象の映画館名、URL、識別子、ブランドカラー等を定義する設定ファイル。 |
-| `js/configLoader.js` | 作成済 | 外部設定ファイル `config/cinemas.json` を fetch して提供するモジュール。 |
-| `js/fetchers/corsProxy.js` | 作成済 | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONを動的フェッチするモジュール。 |
-| `js/fetchers/tohoFetcher.js` | 作成済 | TOHOシネマズ（海老名）用の上映スケジュール・空席動的パースモジュール。 |
-| `js/fetchers/aeonFetcher.js` | 作成済 | イオンシネマ（新百合ヶ丘・座間）用の上映スケジュール・空席動的パースモジュール。 |
-| `js/fetchers/109Fetcher.js` | 作成済 | 109シネマズ（グランベリーパーク）用の上映スケジュール・空席動的パースモジュール。 |
-| `js/scheduleUnifier.js` | 作成済 | 全映画館のデータを結合し、作品タイトルの名寄せ・ユニーク化（MAX方式）を行ってマトリクス構造を作成するモジュール。 |
-| `css/main.css` | 作成済 | ダークモードテーマ、ガラスモルフィズム、カラーパレット、ベースレスポンシブスタイル。 |
-| `css/components.css` | 作成済 | 作品固定列比較表、空席状況バッジ（◎ ◯ △ ×）、モーダル、ローディングアニメーション。 |
-| `index.html` | 作成済 | 検索バー、リアルタイム更新ボタン、マトリクス表、空席詳細モーダルを含むメインWebページ。 |
-| `js/uiRender.js` | 作成済 | マトリクス表の動的DOM構築、作品検索フィルタリング、空席モーダル表示モジュール。 |
-| `js/app.js` | 作成済 | アプリケーション全体の初期化・非同期リアルタイムフェッチ統合・イベント制御。 |
+| ファイル | 説明 |
+| :--- | :--- |
+| `config/cinemas.json` | 比較対象の映画館名、URL、識別子、ブランドカラー等を定義する設定ファイル。 |
+| `js/configLoader.js` | 外部設定ファイル `config/cinemas.json` を fetch して提供するモジュール。 |
+| `js/fetchers/corsProxy.js` | CORS制限を回避するためにパブリックプロキシ経由で外部HTML/JSONを動的フェッチするモジュール。Cloudflare Workers APIとの通信もここで管理。 |
+| `js/fetchers/tohoFetcher.js` | TOHOシネマズ（海老名）用の上映スケジュール動的パースモジュール。印刷用ページからスクレイピングするため、空席情報は「-」表示。 |
+| `js/fetchers/aeonFetcher.js` | イオンシネマ（新百合ヶ丘・座間）用の上映スケジュール・空席動的パースモジュール。 |
+| `js/fetchers/109Fetcher.js` | 109シネマズ（グランベリーパーク）用の上映スケジュール・空席動的パースモジュール。 |
+| `js/scheduleUnifier.js` | 全映画館のデータを結合し、作品タイトルの名寄せ・ユニーク化（MAX方式）を行ってマトリクス構造を作成するモジュール。 |
+| `js/uiRender.js` | マトリクス表の動的DOM構築、作品検索フィルタリング、空席モーダル表示モジュール。 |
+| `js/app.js` | アプリケーション全体の初期化・非同期リアルタイムフェッチ統合・イベント制御。 |
+| `css/main.css` | ダークモードテーマ、ガラスモルフィズム、カラーパレット、ベースレスポンシブスタイル。 |
+| `css/components.css` | 作品固定列比較表、空席状況バッジ（◎ ◯ △ ×）、モーダル、ローディングアニメーション。 |
+| `index.html` | 検索バー、リアルタイム更新ボタン、マトリクス表、空席詳細モーダルを含むメインWebページ。 |
+| `workers/index.js` | Cloudflare Workers 上で稼働するイオンシネマ公式APIプロキシスクリプト。 |
 
 ---
 
@@ -87,11 +83,9 @@ cinema-schedule-comparison/
 
 ---
 
----
-
 ## ⚡ 100%リアルタイム実データ取得の設定方法（Cloudflare Workers 連携）
 
-本アプリは、**Cloudflare Workers（完全無料のサーバーレスAPI）**を接続することで、各映画館（TOHO・イオン・109）の**100%リアルタイムな上映時間・空席状況（◎ ◯ △ ×）**を完全に表示することが可能です。
+本アプリは、**Cloudflare Workers（完全無料のサーバーレスAPI）**を接続することで、イオンシネマの**100%リアルタイムな上映時間・空席状況（◎ ◯ △ ×）**を完全に表示することが可能です。
 
 ### デプロイ手順（無料・約1分で完了）
 
@@ -104,7 +98,7 @@ cinema-schedule-comparison/
    - そのまま **「デプロイ」** （またはWorkerを保存）をクリックします。
    - デプロイ完了後の画面で **「コードを編集」** （または Edit code）ボタンをクリックします。
 4. **コードの貼り付け**:
-   - 開いたエディタ画面のコードをすべて削除し、リポジトリ内の [workers/index.js](file:///Users/sizumi/toybox/git/cinema-schedule-comparison/workers/index.js) の内容を全コピペして貼り付け、右上の **「デプロイ」** ボタンを押します。
+   - 開いたエディタ画面のコードをすべて削除し、リポジトリ内の `workers/index.js` の内容を全コピペして貼り付け、右上の **「デプロイ」** ボタンを押します。
 5. **設定ファイルへの反映**:
    - 発行された Worker のURL（例: `https://cinema-schedule-proxy.xxxx.workers.dev`）をコピーします。
    - `config/cinemas.json` 内の `"workersApiUrl"` にそのURLを貼り付けます：
@@ -142,14 +136,14 @@ cinema-schedule-comparison/
 
 ## ⚠️ TOHOシネマズのデータ取得に関する特記事項
 
-TOHOシネマズ海老名のスケジュールデータは、JavaScriptによる動的レンダリングを回避するため、静的なHTMLが取得できる「印刷用スケジュールページ（`TNPI2160J01.do`）」からスクレイピングを行います。これに伴い、以下の仕様となります。
+TOHOシネマズ海老名のスケジュールデータは、JavaScriptによる動的レンダリングおよびIncapsulaボット対策を回避するため、静的なHTMLが取得できる「印刷用スケジュールページ（`TNPI2160J01.do`）」からスクレイピングを行います。これに伴い、以下の仕様となります。
 
 - **空席情報の非表示**: 印刷用スケジュールページからはリアルタイムの空席状況が取得できないため、空席ステータスは `'-'` (空席情報なし) として扱い、UI上はグレーのバッジで表示されます。
 - **予約URL**: 上映回ごとの予約画面への直リンクは作成できないため、各上映枠をクリックした際、詳細モーダルから劇場のメインスケジュールURLへと遷移する形式になります。
 
-## 📋 初回対象映画館のURL
+## 📋 対象映画館のURL
 
 - **TOHOシネマズ海老名**: `https://hlo.tohotheater.jp/net/schedule/007/TNPI2000J01.do`
 - **イオンシネマ新百合ヶ丘**: `https://theater.aeoncinema.com/theaters/shinyurigaoka/`
-- **109シネマズ南町田グランベリーパーク**: `https://109cinemas.net/grandberrypark/`
-- **イオンシネマ座間**: `https://www.aeoncinema.com/cinema/zama/`
+- **109シネマズグランベリーパーク**: `https://109cinemas.net/grandberrypark/`
+- **イオンシネマ座間**: `https://theater.aeoncinema.com/theaters/zama/`
