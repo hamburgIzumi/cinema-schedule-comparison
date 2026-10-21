@@ -94,99 +94,168 @@ export class Cinema109Fetcher {
       const doc = this.corsProxy.parseDom(html);
 
       const movies = [];
-      const articles = doc.querySelectorAll('#timetable article[id^="m"], #timetable article');
+      const articles = doc.querySelectorAll('#timetable article[id^="m"], #timetable article, article');
 
       articles.forEach(article => {
-        const headerEl = article.querySelector('header h2');
+        const headerEl = article.querySelector('header h2, h2');
         if (!headerEl) return;
         const title = headerEl.textContent.trim();
+        if (!title) return;
 
         const schedules = [];
-        // 各スクリーンごとのスケジュールテーブル (ul.timetable) をループ
+        // 各スクリーンごとのスケジュールテーブル (ul.timetable) をループ（レガシー構造対応）
         const timetables = article.querySelectorAll('ul.timetable');
 
-        timetables.forEach(timetable => {
-          // スクリーン情報を取得 (li.theatre)
-          const theatreEl = timetable.querySelector('li.theatre');
-          if (!theatreEl) return;
+        if (timetables.length > 0) {
+          timetables.forEach(timetable => {
+            // スクリーン情報を取得 (li.theatre)
+            const theatreEl = timetable.querySelector('li.theatre');
+            if (!theatreEl) return;
 
-          // シアター名 (例: シアター10)
-          const theatreNumEl = theatreEl.querySelector('.theatre-num');
-          const theatreNum = theatreNumEl ? theatreNumEl.textContent.trim() : '';
-          const screenName = `シアター${theatreNum}`;
+            // シアター名 (例: シアター10)
+            const theatreNumEl = theatreEl.querySelector('.theatre-num');
+            const theatreNum = theatreNumEl ? theatreNumEl.textContent.trim() : '';
+            const screenName = theatreNum ? `シアター${theatreNum}` : 'スクリーン';
 
-          // 上映方式/音響等の抽出
-          let formats = [];
-          const text = theatreEl.textContent || '';
+            // 上映方式/音響等の抽出
+            let formats = [];
+            const text = theatreEl.textContent || '';
 
-          if (text.includes('IMAX')) formats.push('IMAX');
-          else if (text.includes('4DX')) formats.push('4DX');
-          else if (text.includes('SAION')) formats.push('SAION');
-          else if (text.includes('3D')) formats.push('3D');
+            if (text.includes('IMAX')) formats.push('IMAX');
+            else if (text.includes('4DX')) formats.push('4DX');
+            else if (text.includes('SAION')) formats.push('SAION');
+            else if (text.includes('3D')) formats.push('3D');
 
-          if (formats.length === 0) {
-            formats.push('2D');
-          }
+            if (formats.length === 0) {
+              formats.push('2D');
+            }
 
-          // 映画タイトルから吹替・字幕を判定
-          const lowerTitle = title.toLowerCase();
-          if (lowerTitle.includes('字幕')) {
-            formats.push('字幕');
-          } else if (lowerTitle.includes('吹替')) {
-            formats.push('吹替');
-          }
+            // 映画タイトルから吹替・字幕を判定
+            const lowerTitle = title.toLowerCase();
+            if (lowerTitle.includes('字幕')) {
+              formats.push('字幕');
+            } else if (lowerTitle.includes('吹替')) {
+              formats.push('吹替');
+            }
 
-          const format = formats.join(' ');
+            const format = formats.join(' ');
 
-          // 各上映回 (li.check_date) をループ
-          const showCells = timetable.querySelectorAll('li.check_date');
-          showCells.forEach(cell => {
-            const startEl = cell.querySelector('.start');
-            const endEl = cell.querySelector('.end');
-            if (!startEl || !endEl) return;
+            // 各上映回 (li.check_date) をループ
+            const showCells = timetable.querySelectorAll('li.check_date');
+            showCells.forEach(cell => {
+              const startEl = cell.querySelector('.start');
+              const endEl = cell.querySelector('.end');
+              if (!startEl || !endEl) return;
+
+              const startTime = startEl.textContent.trim();
+              const endTime = endEl.textContent.trim();
+              const timeRange = `${startTime}-${endTime}`;
+
+              // 予約リンク
+              const linkEl = cell.querySelector('a');
+              const reserveUrl = linkEl ? linkEl.getAttribute('href') : (this.config.siteUrl || 'https://109cinemas.net/grandberrypark/');
+
+              // 空き状況の判定
+              let status = '-';
+              let statusText = '不明';
+
+              const availableEl = cell.querySelector('.available');
+              const remainingEl = cell.querySelector('.remaining');
+              const soldoutEl = cell.querySelector('.soldout');
+
+              if (availableEl) {
+                status = '◎';
+                statusText = '空席あり';
+              } else if (remainingEl) {
+                status = '△';
+                statusText = '残りわずか';
+              } else if (soldoutEl) {
+                status = '×';
+                statusText = '完売';
+              } else if (linkEl) {
+                status = '◯';
+                statusText = '予約可能';
+              }
+
+              schedules.push({
+                time: timeRange,
+                startTime: startTime,
+                endTime: endTime,
+                screen: screenName,
+                format: format,
+                status: status,
+                statusText: statusText,
+                reserveUrl: reserveUrl
+              });
+            });
+          });
+        }
+
+        // 新構造対応 (<time> タグや個別上映ブロック)
+        if (schedules.length === 0) {
+          const articleHtml = article.innerHTML;
+          const theaterMatch = articleHtml.match(/シアター(?:<\/a>)?\s*(?:<span>)?(\d+)/i);
+          const defaultScreen = theaterMatch ? `シアター${theaterMatch[1]}` : 'スクリーン';
+
+          let defaultFormat = '2D';
+          const upperHtml = articleHtml.toUpperCase();
+          if (upperHtml.includes('IMAX')) defaultFormat = 'IMAX';
+          else if (upperHtml.includes('4DX')) defaultFormat = '4DX';
+          else if (upperHtml.includes('SAION')) defaultFormat = 'SAION';
+          else if (upperHtml.includes('3D')) defaultFormat = '3D';
+
+          if (title.toLowerCase().includes('字幕')) defaultFormat += ' / 字幕';
+          else if (title.toLowerCase().includes('吹替')) defaultFormat += ' / 吹替';
+          defaultFormat = defaultFormat.replace(/^2D \/ /, '');
+
+          // 各上映回（timeタグまたは開始・終了時刻）
+          const times = article.querySelectorAll('time');
+          for (let i = 0; i < times.length; i += 2) {
+            const startEl = times[i];
+            const endEl = times[i + 1];
+            if (!startEl || !endEl) break;
 
             const startTime = startEl.textContent.trim();
             const endTime = endEl.textContent.trim();
-            const timeRange = `${startTime}-${endTime}`;
+            if (!startTime.match(/\d{1,2}:\d{2}/) || !endTime.match(/\d{1,2}:\d{2}/)) continue;
 
-            // 予約リンク
-            const linkEl = cell.querySelector('a');
+            const timeRange = `${startTime}-${endTime}`;
+            const parentBlock = startEl.closest('div, a, li') || startEl.parentElement;
+            const parentText = parentBlock ? parentBlock.textContent : '';
+
+            // シアター判定
+            let itemScreen = defaultScreen;
+            const localTheater = parentBlock?.innerHTML.match(/シアター(?:<\/a>)?\s*(?:<span>)?(\d+)/i);
+            if (localTheater) {
+              itemScreen = `シアター${localTheater[1]}`;
+            }
+
+            // リンク・ステータス判定
+            const linkEl = parentBlock ? parentBlock.querySelector('a[href*="resv_shw_ppt"]') || parentBlock.querySelector('a') : null;
             const reserveUrl = linkEl ? linkEl.getAttribute('href') : (this.config.siteUrl || 'https://109cinemas.net/grandberrypark/');
 
-            // 空き状況の判定
-            let status = '-';
-            let statusText = '不明';
-
-            const availableEl = cell.querySelector('.available');
-            const remainingEl = cell.querySelector('.remaining');
-            const soldoutEl = cell.querySelector('.soldout');
-
-            if (availableEl) {
-              status = '◎';
-              statusText = '空席あり';
-            } else if (remainingEl) {
-              status = '△';
-              statusText = '残りわずか';
-            } else if (soldoutEl) {
+            let status = '◯';
+            let statusText = '予約可能';
+            if (parentText.includes('販売終了')) {
               status = '×';
-              statusText = '完売';
-            } else if (linkEl) {
+              statusText = '販売終了';
+            } else if (parentText.includes('購入') || linkEl) {
               status = '◯';
-              statusText = '予約可能';
+              statusText = '購入可能';
             }
 
             schedules.push({
               time: timeRange,
               startTime: startTime,
               endTime: endTime,
-              screen: screenName,
-              format: format,
+              screen: itemScreen,
+              format: defaultFormat,
               status: status,
               statusText: statusText,
               reserveUrl: reserveUrl
             });
-          });
-        });
+          }
+        }
 
         if (schedules.length > 0) {
           movies.push({ title, schedules });

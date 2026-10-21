@@ -221,38 +221,59 @@ function parseTohoHtml(html, siteCode) {
  */
 async function fetch109Schedule(cinemaId, dateStr) {
   const cinemaName = '109シネマズ グランベリーパーク';
-  const baseUrl = 'https://109cinemas.net/grandberrypark/schedules/';
+  const baseUrl = 'https://109cinemas.net/grandberrypark/';
 
-  // 正しいURL形式: YYYYMMDD.html?theater_code=G1
-  const targetUrl = `${baseUrl}${dateStr}.html?theater_code=G1`;
+  // 複数のURL候補を順に試行（日付別スケジュールページ、または日付クエリ付きトップページ）
+  const targetUrls = [
+    `${baseUrl}schedules/${dateStr}.html?theater_code=G1`,
+    `${baseUrl}schedules/${dateStr}.html`,
+    `${baseUrl}?date=${dateStr}`,
+    `${baseUrl}`
+  ];
 
-  const response = await fetch(targetUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
-      'Referer': 'https://109cinemas.net/grandberrypark/'
-    }
-  });
+  const browserHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+    'Cache-Control': 'max-age=0',
+    'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'Referer': 'https://109cinemas.net/'
+  };
 
-  if (!response.ok) {
-    // リトライ: クエリなし YYYYMMDD.html
-    const fallbackUrl = `${baseUrl}${dateStr}.html`;
-    const fallbackRes = await fetch(fallbackUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml'
+  let html = '';
+  let lastError = null;
+
+  for (const targetUrl of targetUrls) {
+    try {
+      const response = await fetch(targetUrl, {
+        headers: browserHeaders
+      });
+
+      if (response.ok) {
+        const text = await response.text();
+        if (text && (text.includes('timetable') || text.includes('article') || text.includes('ストリートファイター'))) {
+          html = text;
+          break;
+        }
+      } else {
+        lastError = new Error(`109シネマズ取得失敗 (Status: ${response.status}) at ${targetUrl}`);
       }
-    });
-    if (!fallbackRes.ok) {
-      throw new Error(`109シネマズ取得失敗 (Status: ${response.status})`);
+    } catch (err) {
+      lastError = err;
     }
-    const html = await fallbackRes.text();
-    const movies = parse109Html(html);
-    return { cinemaId, cinemaName, targetDate: dateStr, fetchedAt: new Date().toISOString(), movies };
   }
 
-  const html = await response.text();
+  if (!html) {
+    throw lastError || new Error(`109シネマズのHTML取得に失敗しました`);
+  }
+
   const movies = parse109Html(html);
 
   return {
@@ -266,8 +287,9 @@ async function fetch109Schedule(cinemaId, dateStr) {
 
 /**
  * 109シネマズのHTMLをRegexでパース
- * 構造: article > header h2 (タイトル),
- *        ul.timetable > li.theatre (.theatre-num) + li.check_date (.start + .end)
+ * 構造: 
+ *   - レガシー構造: article > header h2 (タイトル), ul.timetable > li.theatre (.theatre-num) + li.check_date (.start + .end)
+ *   - 新構造: article > h2 (タイトル), 各シアター別ブロック (div等) 内のシアター表記、<time>開始時刻</time> ~ <time>終了時刻</time>、購入リンク/販売終了
  */
 function parse109Html(html) {
   const movies = [];
@@ -288,11 +310,13 @@ function parse109Html(html) {
 
     const schedules = [];
 
-    // ul.timetable ブロックごとに処理
+    // パターン1: レガシー構造 (ul.timetable が存在する場合)
     const ulPattern = /<ul[^>]+class="[^"]*timetable[^"]*"[^>]*>([\s\S]*?)<\/ul>/gi;
     let ulMatch;
+    let hasUlTimetable = false;
 
     while ((ulMatch = ulPattern.exec(fullArticleHtml)) !== null) {
+      hasUlTimetable = true;
       const ulContent = ulMatch[1];
 
       // スクリーン情報 (li.theatre)
@@ -319,7 +343,7 @@ function parse109Html(html) {
       else if (lowerTitle.includes('吹替')) screenFormat += ' / 吹替';
       screenFormat = screenFormat.replace(/^2D \/ /, '');
 
-      // 各上映回 (li.check_date) ※HTML5で </li> 閉じタグが省略されているため、次の <li か </ul> 前まで抽出
+      // 各上映回 (li.check_date)
       const checkDatePattern = /<li[^>]+class="[^"]*check_date[^"]*"[^>]*>([\s\S]*?)(?=<li|<\/ul>|$)/gi;
       let cdMatch;
 
@@ -362,6 +386,86 @@ function parse109Html(html) {
           endTime: endTime,
           screen: screenName,
           format: screenFormat,
+          status: status,
+          statusText: statusText,
+          reserveUrl: reserveUrl
+        });
+      }
+    }
+
+    // パターン2: 新構造 (ul.timetable がない、または見つからなかった場合)
+    if (!hasUlTimetable || schedules.length === 0) {
+      // <time>08:45</time> ~ <time>10:55</time> または時刻パターンを抽出
+      // シアター情報をコンテキストから取得
+      const theaterNumMatches = Array.from(fullArticleHtml.matchAll(/シアター(?:<\/a>)?\s*(?:<span>)?(\d+)/gi));
+      const currentTheaterNum = theaterNumMatches.length > 0 ? theaterNumMatches[0][1] : '';
+      let defaultScreen = currentTheaterNum ? `シアター${currentTheaterNum}` : 'スクリーン';
+
+      let defaultFormat = '2D';
+      const upperArticle = fullArticleHtml.toUpperCase();
+      if (upperArticle.includes('IMAX')) defaultFormat = 'IMAX';
+      else if (upperArticle.includes('4DX')) defaultFormat = '4DX';
+      else if (upperArticle.includes('SAION')) defaultFormat = 'SAION';
+      else if (upperArticle.includes('3D')) defaultFormat = '3D';
+
+      if (title.toLowerCase().includes('字幕')) defaultFormat += ' / 字幕';
+      else if (title.toLowerCase().includes('吹替')) defaultFormat += ' / 吹替';
+      defaultFormat = defaultFormat.replace(/^2D \/ /, '');
+
+      // <time>HH:MM</time> ... <time>HH:MM</time> の組み合わせ
+      const timeTagPattern = /<time[^>]*>(\d{1,2}:\d{2})<\/time>[\s\S]*?<time[^>]*>(\d{1,2}:\d{2})<\/time>/gi;
+      let timeMatch;
+      while ((timeMatch = timeTagPattern.exec(fullArticleHtml)) !== null) {
+        const startTime = timeMatch[1];
+        const endTime = timeMatch[2];
+
+        // この上映回周辺のHTML（リンクや購入ボタン、シアター特定）を探索
+        const contextStart = Math.max(0, timeMatch.index - 300);
+        const contextEnd = Math.min(fullArticleHtml.length, timeMatch.index + 300);
+        const surroundingHtml = fullArticleHtml.substring(contextStart, contextEnd);
+
+        // シアター番号のローカル特定
+        let screen = defaultScreen;
+        const localTheater = /シアター(?:<\/a>)?\s*(?:<span>)?(\d+)/i.exec(surroundingHtml);
+        if (localTheater) {
+          screen = `シアター${localTheater[1]}`;
+        }
+
+        // 音響/フォーマットのローカル特定
+        let itemFormat = defaultFormat;
+        const upperSurrounding = surroundingHtml.toUpperCase();
+        if (upperSurrounding.includes('IMAX')) itemFormat = 'IMAX';
+        else if (upperSurrounding.includes('4DX')) itemFormat = '4DX';
+        else if (upperSurrounding.includes('SAION')) itemFormat = 'SAION';
+        if (title.toLowerCase().includes('字幕') && !itemFormat.includes('字幕')) itemFormat += ' / 字幕';
+        else if (title.toLowerCase().includes('吹替') && !itemFormat.includes('吹替')) itemFormat += ' / 吹替';
+        itemFormat = itemFormat.replace(/^2D \/ /, '');
+
+        // 予約リンク
+        let reserveUrl = 'https://109cinemas.net/grandberrypark/';
+        const linkMatch = /href="([^"]*resv_shw_ppt[^"]*)"/i.exec(surroundingHtml) || /href="([^"]+)"/i.exec(surroundingHtml);
+        if (linkMatch) {
+          const rawHref = linkMatch[1].replace(/&amp;/g, '&');
+          reserveUrl = rawHref.startsWith('http') ? rawHref : siteBase + rawHref;
+        }
+
+        // ステータス判定
+        let status = '◯';
+        let statusText = '予約可能';
+        if (surroundingHtml.includes('販売終了')) {
+          status = '×';
+          statusText = '販売終了';
+        } else if (surroundingHtml.includes('購入') || linkMatch) {
+          status = '◯';
+          statusText = '購入可能';
+        }
+
+        schedules.push({
+          time: `${startTime}-${endTime}`,
+          startTime: startTime,
+          endTime: endTime,
+          screen: screen,
+          format: itemFormat,
           status: status,
           statusText: statusText,
           reserveUrl: reserveUrl
